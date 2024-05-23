@@ -1,0 +1,6 @@
+PyYaml
+argparse
+jinja2
+wget
+requests
+tqdm

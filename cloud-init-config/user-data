@@ -1,0 +1,11 @@
+#cloud-config
+system_info:
+  default_user:
+    name: default_user
+    home: /home/default_user
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    passwd: ""
+    lock_passwd: false
+    shell: /bin/bash
+hostname: vm-image
+ssh_pwauth: False
