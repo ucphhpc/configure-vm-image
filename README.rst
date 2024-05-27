@@ -22,13 +22,12 @@ This can be determined via the ``which`` command::
 
 If the command is not available, the qemu-kvm might be in a different location that is not part of
 your current PATH. In this case, you can create a symbolic link to the qemu-kvm command in a directory
-
 An example of this could be::
 
     ln -s /usr/share/bash-completion/completions/qemu-kvm /usr/local/bin/qemu-kvm
 
 The ``configure-vm-image`` command can be used to generate virtual machine images for the supported distributions.
-To define which images should be generated, architecture.yml file should be created and defined beforehand.
+To define which images should be generated, ``architecture.yml`` file should be created and defined beforehand.
 
 
 ---------------------------------
@@ -77,7 +76,7 @@ The default location from where these are expected to be found can be discovered
 To configure the image, the ``configure-vm-image`` tool starts an instance of the image and sends commands to the running image via the QEMU monitor socket.
 The configuration files for cloud-init should be defined beforehand and the tool requires that the to be configured image supports cloud-init.
 
-To configure the built VM image disk with the default values, `make configure` can be run in the root directory of the project::
+To configure the built VM image disk with the default values, ``make configure`` can be run in the root directory of the project::
 
     make configure
 
@@ -85,11 +84,11 @@ To configure the built VM image disk with the default values, `make configure` c
 Putting it all togeather
 ------------------------
 
-To build and configure a VM image disk with the default values, `make` can be run in the root directory of the project::
+To configure a VM image disk with the default values, ``make`` can be run in the root directory of the project::
 
     make
 
-The build and configure steps can be specialized via each of the respected Makefile parameters `BUILD_ARGS` and `CONFIGURE_ARGS`.
+The configure steps can be specialized via each of the respected Makefile parameter ``ARGS``.
 An example of this can be seen below::
 
-    make BUILD_ARGS="--architecture-path examples/architecture.yml" CONFIGURE_ARGS="--image-input-path output-images/image.qcow2"
+    make ARGS="--image-input-path output-images/image.qcow2"
