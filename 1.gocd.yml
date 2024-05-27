@@ -1,23 +1,23 @@
 environments:
-  gen-vm-image:
+  configure-vm-image:
     environment_variables:
       GIT_USER: "{{SECRET:[github][username]}}"
-      PYPI_USERNAME: '{{SECRET:[gen-vm-image][username]}}'
-      PYPI_PASSWORD: '{{SECRET:[gen-vm-image][password]}}'
+      PYPI_USERNAME: '{{SECRET:[configure-vm-image][username]}}'
+      PYPI_PASSWORD: '{{SECRET:[configure-vm-image][password]}}'
     pipelines:
-      - gen-vm-image
+      - configure-vm-image
 format_version: 10
 pipelines:
-  gen-vm-image:
+  configure-vm-image:
     display_order: -1
     group: bare_metal_pypi_package
     label_template: ${COUNT}
     lock_behaviour: none
     materials:
       gen_vm_image_git:
-        git: https://github.com/ucphhpc/gen-vm-image.git
+        git: https://github.com/ucphhpc/configure-vm-image.git
         branch: main
-        destination: gen-vm-image
+        destination: configure-vm-image
       publish_python_git:
         git: https://github.com/rasmunk/publish-python-scripts.git
         branch: main
@@ -26,7 +26,7 @@ pipelines:
         destination: publish-python-scripts
     parameters:
       ARGS: ''
-      SRC_DIRECTORY: gen-vm-image
-      TEST_DIRECTORY: gen-vm-image
-      PUSH_DIRECTORY: publish-docker-scripts
+      SRC_DIRECTORY: configure-vm-image
+      TEST_DIRECTORY: configure-vm-image
+      PUSH_DIRECTORY: publish-python-scripts
     template: bare_metal_pypi_package

@@ -15,8 +15,8 @@ can be found in the `dep` directory for the supported distributions.
 Setup
 -----
 
-The `qemu-kvm` command might not be available in the default PATH.
-This can be determined via the `which` command::
+The ``qemu-kvm`` command might not be available in the default PATH.
+This can be determined via the ``which`` command::
 
     which qemu-kvm
 
@@ -27,7 +27,7 @@ An example of this could be::
 
     ln -s /usr/share/bash-completion/completions/qemu-kvm /usr/local/bin/qemu-kvm
 
-The `configure-vm-image` command can be used to generate virtual machine images for the supported distributions.
+The ``configure-vm-image`` command can be used to generate virtual machine images for the supported distributions.
 To define which images should be generated, architecture.yml file should be created and defined beforehand.
 
 
@@ -35,7 +35,7 @@ To define which images should be generated, architecture.yml file should be crea
 Configure a Virtual Machine Image
 ---------------------------------
 
-To configure a built VM image disk, the `configure-vm-image` command can be used.
+To configure a built VM image disk, the ``configure-vm-image`` command can be used.
 This tool uses cloud-init to configure the image, and the configuration files for cloud-init should be defined beforehand.
 Therefore, the tool requires that the to be configured image supports cloud-init, a list of various distributions cloud-init images can be found below.
 
@@ -74,7 +74,7 @@ The default location from where these are expected to be found can be discovered
         --qemu-cpu-model QEMU_CPU_MODEL
                                 The default cpu model for configuring the image (default: host)
 
-To configure the image, the `configure-vm-image` tool starts an instance of the image and sends commands to the running image via the QEMU monitor socket.
+To configure the image, the ``configure-vm-image`` tool starts an instance of the image and sends commands to the running image via the QEMU monitor socket.
 The configuration files for cloud-init should be defined beforehand and the tool requires that the to be configured image supports cloud-init.
 
 To configure the built VM image disk with the default values, `make configure` can be run in the root directory of the project::

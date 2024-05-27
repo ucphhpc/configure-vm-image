@@ -4,49 +4,60 @@ import subprocess
 import socket
 import multiprocessing as mp
 from src.common.defaults import CLOUD_CONFIG_DIR, IMAGE_CONFIG_DIR, GENERATED_IMAGE_DIR
+from src.common.errors import (
+    PATH_CREATE_ERROR,
+    PATH_CREATE_ERROR_MSG,
+    PATH_NOT_FOUND_ERROR,
+    PATH_NOT_FOUND_ERROR_MSG,
+    CONFIGURE_IMAGE_ERROR,
+    CONFIGURE_IMAGE_ERROR_MSG,
+    RESET_IMAGE_ERROR,
+    RESET_IMAGE_ERROR_MSG,
+)
 from src.utils.job import run, run_popen
 from src.utils.io import exists, makedirs, which
 
 SCRIPT_NAME = __file__
 
 
+def create_cloud_init_disk(
+    user_data_path, meta_data_path, vendor_data_path, output_path
+):
+    # Generated the configuration image
+    cloud_init_command = [
+        "cloud-localds",
+        output_path,
+        user_data_path,
+        meta_data_path,
+        "-V",
+        vendor_data_path,
+    ]
+    localds_result = run(cloud_init_command, format_output_str=True)
+    if localds_result["returncode"] != "0":
+        return PATH_CREATE_ERROR, PATH_CREATE_ERROR_MSG.format(
+            output_path, localds_result["error"]
+        )
+
+    return localds_result, None
+
+
 def generate_image_configuration(
-    user_data_path, metadata_path, vendordata_path, output_path
+    user_data_path, meta_data_path, vendor_data_path, output_path
 ):
     # Setup the cloud init configuration
     # Generate a disk with user-supplied data
     if not exists(user_data_path):
-        print(
-            "Failed to find a cloud-init user-data file at: {}".format(user_data_path)
-        )
-        return False
+        return PATH_NOT_FOUND_ERROR, PATH_NOT_FOUND_ERROR_MSG.format(user_data_path)
 
-    if not exists(metadata_path):
-        print("Failed to find a cloud-init meta-data file at: {}".format(metadata_path))
-        return False
+    if not exists(meta_data_path):
+        return PATH_NOT_FOUND_ERROR, PATH_NOT_FOUND_ERROR_MSG.format(meta_data_path)
 
-    if not exists(vendordata_path):
-        print(
-            "Failed to find a cloud-init vendor-data file at: {}".format(
-                vendordata_path
-            )
-        )
-        return False
+    if not exists(vendor_data_path):
+        return PATH_NOT_FOUND_ERROR, PATH_NOT_FOUND_ERROR_MSG.format(vendor_data_path)
 
-    # Generated the configuration image
-    localds_command = [
-        "cloud-localds",
-        output_path,
-        user_data_path,
-        metadata_path,
-        "-V",
-        vendordata_path,
-    ]
-    localds_result = run(localds_command)
-    if localds_result["returncode"] != 0:
-        print("Failed to generate cloud-localds: {}".format(localds_result))
-        return False
-    return True
+    return create_cloud_init_disk(
+        user_data_path, meta_data_path, vendor_data_path, output_path
+    )
 
 
 def discover_kvm_command():
@@ -160,7 +171,6 @@ def configure_image(image, configuration_path, qemu_socket_path, cpu_model="host
     shutdowing_vm = mp.Process(target=shutdown_vm, args=(queue, qemu_socket_path))
 
     # Start the sub processes
-    print("Launching the configuration of: {}".format(image))
     configuring_vm.start()
     shutdowing_vm.start()
 
@@ -241,38 +251,42 @@ def run_configure_image():
 
     # Ensure that the image to configure exists
     if not exists(image_path):
-        print("Failed to find an image at the specified path: {}".format(image_path))
-        exit(1)
+        print(
+            PATH_NOT_FOUND_ERROR_MSG.format(
+                image_path, "the image to configured was not found"
+            )
+        )
+        exit(PATH_NOT_FOUND_ERROR)
 
     # Ensure that the required output directories exists
     image_output_dir = os.path.dirname(image_path)
     image_config_dir = os.path.dirname(seed_output_path)
 
     for d in [image_output_dir, image_config_dir]:
-        if not exists(IMAGE_CONFIG_DIR):
-            created, msg = makedirs(IMAGE_CONFIG_DIR)
+        if not exists(d):
+            created, msg = makedirs(d)
             if not created:
-                print(msg)
-                exit(1)
+                print(PATH_CREATE_ERROR_MSG.format(d, msg))
+                exit(PATH_CREATE_ERROR)
 
-    generated = generate_image_configuration(
+    generated_result, generated_msg = generate_image_configuration(
         user_data_path, meta_data_path, vendor_data_path, seed_output_path
     )
-    if not generated:
-        print("Failed to generate the image configuration")
-        exit(2)
+    if not generated_result:
+        print(generated_msg)
+        exit(generated_result)
 
     configured = configure_image(
         image_path, seed_output_path, image_qemu_socket_path, cpu_model=qemu_cpu_model
     )
     if not configured:
-        print("Failed to configure image: {}".format(image_path))
-        exit(3)
+        print(CONFIGURE_IMAGE_ERROR_MSG.format(image_path))
+        exit(CONFIGURE_IMAGE_ERROR)
 
     reset = reset_image(image_path)
     if not reset:
-        print("Failed to reset image: {}".format(image_path))
-        exit(4)
+        print(RESET_IMAGE_ERROR_MSG.format(image_path))
+        exit(RESET_IMAGE_ERROR)
 
 
 if __name__ == "__main__":
