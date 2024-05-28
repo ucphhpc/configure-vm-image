@@ -76,7 +76,7 @@ The default location from where these are expected to be found can be discovered
 To configure the image, the ``configure-vm-image`` tool starts an instance of the image and sends commands to the running image via the QEMU monitor socket.
 The configuration files for cloud-init should be defined beforehand and the tool requires that the to be configured image supports cloud-init.
 
-To configure the built VM image disk with the default values, ``make configure`` can be run in the root directory of the project::
+To configure an existing image disk with the default values, ``make configure`` can be run in the root directory of the project::
 
     make configure
 
