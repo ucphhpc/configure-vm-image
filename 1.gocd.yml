@@ -14,7 +14,7 @@ pipelines:
     label_template: ${COUNT}
     lock_behaviour: none
     materials:
-      gen_vm_image_git:
+      configure_vm_image_git:
         git: https://github.com/ucphhpc/configure-vm-image.git
         branch: main
         destination: configure-vm-image
