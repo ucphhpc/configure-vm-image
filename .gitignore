@@ -163,4 +163,4 @@ cython_debug/
 image-config/
 
 # Ignore the generated vm images
-generated-images/
+configure-images/

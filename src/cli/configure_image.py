@@ -3,7 +3,7 @@ import os
 import subprocess
 import socket
 import multiprocessing as mp
-from src.common.defaults import CLOUD_CONFIG_DIR, IMAGE_CONFIG_DIR, GENERATED_IMAGE_DIR
+from src.common.defaults import CLOUD_CONFIG_DIR, IMAGE_CONFIG_DIR, CONFIGURE_IMAGE_DIR
 from src.common.errors import (
     PATH_CREATE_ERROR,
     PATH_CREATE_ERROR_MSG,
@@ -203,12 +203,12 @@ def run_configure_image():
     )
     parser.add_argument(
         "--image-input-path",
-        default=os.path.join(GENERATED_IMAGE_DIR, "image.qcow2"),
+        default=os.path.join(CONFIGURE_IMAGE_DIR, "image.qcow2"),
         help="The path to the image that is to be configured",
     )
     parser.add_argument(
         "---image-qemu-socket-path",
-        default=os.path.join(GENERATED_IMAGE_DIR, "qemu-monitor-socket"),
+        default=os.path.join(CONFIGURE_IMAGE_DIR, "qemu-monitor-socket"),
         help="The path to where the QEMU monitor socket should be placed which is used to send commands to the running image while it is being configured.",
     )
     parser.add_argument(
