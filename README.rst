@@ -57,10 +57,10 @@ The default location from where these are expected to be found can be discovered
         optional arguments:
         -h, --help            show this help message and exit
         --image-input-path IMAGE_INPUT_PATH
-                                The path to the image that is to be configured (default: generated-images/image.qcow2)
+                                The path to the image that is to be configured (default: configure-images/image.qcow2)
         ---image-qemu-socket-path IMAGE_QEMU_SOCKET_PATH
                                 The path to where the QEMU monitor socket should be placed which is used to send commands to the running image while it is being configured. (default:
-                                generated-images/qemu-monitor-socket)
+                                configure-images/qemu-monitor-socket)
         --config-user-data-path CONFIG_USER_DATA_PATH
                                 The path to the cloud-init user-data configuration file (default: cloud-init-config/user-data)
         --config-meta-data-path CONFIG_META_DATA_PATH
