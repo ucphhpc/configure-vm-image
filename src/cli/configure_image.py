@@ -41,6 +41,35 @@ def create_cloud_init_disk(
     return localds_result, None
 
 
+def virt_customize(image_path, commands_from_file):
+    if not exists(image_path):
+        return PATH_NOT_FOUND_ERROR, PATH_NOT_FOUND_ERROR_MSG.format(
+            image_path, "could not find the image path to customize"
+        )
+
+    if not exists(commands_from_file):
+        return PATH_NOT_FOUND_ERROR, PATH_NOT_FOUND_ERROR_MSG.format(
+            commands_from_file,
+            "could not find the commands file to customize the image with",
+        )
+
+    # Run the virt-customize command
+    virt_customize_command = [
+        "virt-customize",
+        "-a",
+        image_path,
+        "--commands-from-file",
+        commands_from_file,
+    ]
+    result = subprocess.run(virt_customize_command, format_output_str=True)
+    if result["returncode"] != "0":
+        return CONFIGURE_IMAGE_ERROR, CONFIGURE_IMAGE_ERROR_MSG.format(
+            image_path, result["error"]
+        )
+
+    return result, None
+
+
 def generate_image_configuration(
     user_data_path, meta_data_path, vendor_data_path, output_path
 ):
@@ -280,12 +309,12 @@ def run_configure_image():
         image_path, seed_output_path, image_qemu_socket_path, cpu_model=qemu_cpu_model
     )
     if not configured:
-        print(CONFIGURE_IMAGE_ERROR_MSG.format(image_path))
+        print(CONFIGURE_IMAGE_ERROR_MSG.format(image_path, "failed to configure image"))
         exit(CONFIGURE_IMAGE_ERROR)
 
     reset = reset_image(image_path)
     if not reset:
-        print(RESET_IMAGE_ERROR_MSG.format(image_path))
+        print(RESET_IMAGE_ERROR_MSG.format(image_path, "failed to reset image"))
         exit(RESET_IMAGE_ERROR)
 
 
