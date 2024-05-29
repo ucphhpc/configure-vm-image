@@ -40,7 +40,7 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "configure-vm-image = src.cli.configure_image:run_configure_image",
+            "configure-vm-image = configure_vm_image.cli.configure_image:run_configure_image",
         ]
     },
     classifiers=[

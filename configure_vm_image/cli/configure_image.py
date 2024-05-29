@@ -3,8 +3,12 @@ import os
 import subprocess
 import socket
 import multiprocessing as mp
-from src.common.defaults import CLOUD_CONFIG_DIR, IMAGE_CONFIG_DIR, CONFIGURE_IMAGE_DIR
-from src.common.errors import (
+from configure_vm_image.common.defaults import (
+    CLOUD_CONFIG_DIR,
+    IMAGE_CONFIG_DIR,
+    CONFIGURE_IMAGE_DIR,
+)
+from configure_vm_image.common.errors import (
     PATH_CREATE_ERROR,
     PATH_CREATE_ERROR_MSG,
     PATH_NOT_FOUND_ERROR,
@@ -14,8 +18,8 @@ from src.common.errors import (
     RESET_IMAGE_ERROR,
     RESET_IMAGE_ERROR_MSG,
 )
-from src.utils.job import run, run_popen
-from src.utils.io import exists, makedirs, which
+from configure_vm_image.utils.job import run, run_popen
+from configure_vm_image.utils.io import exists, makedirs, which
 
 SCRIPT_NAME = __file__
 
