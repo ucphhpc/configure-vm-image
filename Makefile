@@ -4,15 +4,18 @@
 OWNER:=rasmunk
 PACKAGE_NAME=configure-vm-image
 PACKAGE_NAME_FORMATTED=$(subst -,_,${PACKAGE_NAME})
+CONFIGURE_IMAGES_DIR=configure-images
 ARGS=
 
-all: init install-dep install configure
+all: init install-dep install
 
 init: venv
+	mkdir ${CONFIGURE_IMAGES_DIR}
 
 clean:
 	${MAKE} distclean
 	${MAKE} venv-clean
+	rm -fr ${CONFIGURE_IMAGES_DIR}
 	rm -fr .env
 	rm -fr .pytest_cache
 	rm -fr tests/__pycache__
