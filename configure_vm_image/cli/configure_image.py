@@ -291,7 +291,7 @@ def run_configure_image():
 
     args = parser.parse_args()
 
-    image_path = args.image_input_path
+    image_path = args.image_path
     user_data_path = args.config_user_data_path
     meta_data_path = args.config_meta_data_path
     vendor_data_path = args.config_vendor_data_path
@@ -304,7 +304,7 @@ def run_configure_image():
     if not exists(image_path):
         print(
             PATH_NOT_FOUND_ERROR_MSG.format(
-                image_path, "the image to configured was not found"
+                image_path, "could not find the image to configure"
             )
         )
         exit(PATH_NOT_FOUND_ERROR)
