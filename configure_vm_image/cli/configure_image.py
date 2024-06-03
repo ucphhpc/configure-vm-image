@@ -3,11 +3,7 @@ import os
 import subprocess
 import socket
 import multiprocessing as mp
-from configure_vm_image.common.defaults import (
-    CLOUD_CONFIG_DIR,
-    IMAGE_CONFIG_DIR,
-    CONFIGURE_IMAGE_DIR,
-)
+from configure_vm_image.common.defaults import CLOUD_INIT_DIR, CONFIGURE_IMAGE_TMP_DIR
 from configure_vm_image.common.errors import (
     PATH_CREATE_ERROR,
     PATH_CREATE_ERROR_MSG,
@@ -251,41 +247,40 @@ def run_configure_image():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
-        "--image-input-path",
-        default=os.path.join(CONFIGURE_IMAGE_DIR, "image.qcow2"),
+        "image_path",
         help="The path to the image that is to be configured",
     )
     parser.add_argument(
-        "---image-qemu-socket-path",
-        default=os.path.join(CONFIGURE_IMAGE_DIR, "qemu-monitor-socket"),
-        help="The path to where the QEMU monitor socket should be placed which is used to send commands to the running image while it is being configured.",
-    )
-    parser.add_argument(
         "--config-user-data-path",
-        default=os.path.join(CLOUD_CONFIG_DIR, "user-data"),
+        default=os.path.join(CLOUD_INIT_DIR, "user-data"),
         help="The path to the cloud-init user-data configuration file",
     )
     parser.add_argument(
         "--config-meta-data-path",
-        default=os.path.join(CLOUD_CONFIG_DIR, "meta-data"),
+        default=os.path.join(CLOUD_INIT_DIR, "meta-data"),
         help="The path to the cloud-init meta-data configuration file",
     )
     parser.add_argument(
         "--config-vendor-data-path",
-        default=os.path.join(CLOUD_CONFIG_DIR, "vendor-data"),
+        default=os.path.join(CLOUD_INIT_DIR, "vendor-data"),
         help="The path to the cloud-init vendor-data configuration file",
     )
     parser.add_argument(
         "--config-network-config-path",
-        default=os.path.join(CLOUD_CONFIG_DIR, "network-config"),
+        default=os.path.join(CLOUD_INIT_DIR, "network-config"),
         help="""The path to the cloud-init network-config configuration file
         that is used to configure the network settings of the image""",
     )
     parser.add_argument(
-        "--config-seed-output-path",
-        default=os.path.join(IMAGE_CONFIG_DIR, "seed.img"),
+        "--staging-image-path",
+        default=os.path.join(CONFIGURE_IMAGE_TMP_DIR, "seed.img"),
         help="""The path to the cloud-init output seed image file that is generated
-        based on the data defined in the user-data, meta-data, and vendor-data configs""",
+        based on the data defined in the user-data, meta-data, vendor-data, and network-config files. This seed image file is then subsequently used to configure the defined input image.""",
+    )
+    parser.add_argument(
+        "--staging-socket-path",
+        default=os.path.join(CONFIGURE_IMAGE_TMP_DIR, "qemu-monitor-socket"),
+        help="The path to where the QEMU monitor socket should be placed which is used to send commands to the running image while it is being configured.",
     )
     # # https://qemu-project.gitlab.io/qemu/system/qemu-cpu-models.html
     parser.add_argument(
@@ -297,12 +292,12 @@ def run_configure_image():
     args = parser.parse_args()
 
     image_path = args.image_input_path
-    image_qemu_socket_path = args.image_qemu_socket_path
     user_data_path = args.config_user_data_path
     meta_data_path = args.config_meta_data_path
     vendor_data_path = args.config_vendor_data_path
     network_config_path = args.config_network_config_path
-    seed_output_path = args.config_seed_output_path
+    staging_image_path = args.staging_image_path
+    staging_socket_path = args.staging_socket_path
     qemu_cpu_model = args.qemu_cpu_model
 
     # Ensure that the image to configure exists
@@ -315,10 +310,9 @@ def run_configure_image():
         exit(PATH_NOT_FOUND_ERROR)
 
     # Ensure that the required output directories exists
-    image_output_dir = os.path.dirname(image_path)
-    socket_dir = os.path.dirname(image_qemu_socket_path)
-    image_config_dir = os.path.dirname(seed_output_path)
-    for d in [image_output_dir, socket_dir, image_config_dir]:
+    seed_image_dir = os.path.dirname(staging_image_path)
+    configure_socket_dir = os.path.dirname(staging_socket_path)
+    for d in [seed_image_dir, configure_socket_dir]:
         if not exists(d):
             created, msg = makedirs(d)
             if not created:
@@ -330,14 +324,14 @@ def run_configure_image():
         meta_data_path,
         vendor_data_path,
         network_config_path,
-        seed_output_path,
+        staging_image_path,
     )
     if not generated_result:
         print(generated_msg)
         exit(generated_result)
 
     configured = configure_image(
-        image_path, seed_output_path, image_qemu_socket_path, cpu_model=qemu_cpu_model
+        image_path, staging_image_path, staging_socket_path, cpu_model=qemu_cpu_model
     )
     if not configured:
         print(CONFIGURE_IMAGE_ERROR_MSG.format(image_path, "failed to configure image"))
