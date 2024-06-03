@@ -1,0 +1,4 @@
+version: 2
+ethernets:
+  interface0:
+    set-name: eth1

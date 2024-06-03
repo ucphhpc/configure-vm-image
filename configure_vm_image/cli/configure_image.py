@@ -25,7 +25,11 @@ SCRIPT_NAME = __file__
 
 
 def create_cloud_init_disk(
-    user_data_path, meta_data_path, vendor_data_path, output_path
+    user_data_path,
+    meta_data_path,
+    vendor_data_path,
+    output_path,
+    network_config_path=None,
 ):
     # Generated the configuration image
     cloud_init_command = [
@@ -36,6 +40,9 @@ def create_cloud_init_disk(
         "-V",
         vendor_data_path,
     ]
+    if network_config_path:
+        cloud_init_command.extend(["-N", network_config_path])
+
     localds_result = run(cloud_init_command, format_output_str=True)
     if localds_result["returncode"] != "0":
         return PATH_CREATE_ERROR, PATH_CREATE_ERROR_MSG.format(
@@ -75,7 +82,7 @@ def virt_customize(image_path, commands_from_file):
 
 
 def generate_image_configuration(
-    user_data_path, meta_data_path, vendor_data_path, output_path
+    user_data_path, meta_data_path, vendor_data_path, network_config_path, output_path
 ):
     # Setup the cloud init configuration
     # Generate a disk with user-supplied data
@@ -88,9 +95,18 @@ def generate_image_configuration(
     if not exists(vendor_data_path):
         return PATH_NOT_FOUND_ERROR, PATH_NOT_FOUND_ERROR_MSG.format(vendor_data_path)
 
-    return create_cloud_init_disk(
-        user_data_path, meta_data_path, vendor_data_path, output_path
-    )
+    if exists(network_config_path):
+        return create_cloud_init_disk(
+            user_data_path,
+            meta_data_path,
+            vendor_data_path,
+            output_path,
+            network_config_path=network_config_path,
+        )
+    else:
+        return create_cloud_init_disk(
+            user_data_path, meta_data_path, vendor_data_path, output_path
+        )
 
 
 def discover_kvm_command():
@@ -260,6 +276,12 @@ def run_configure_image():
         help="The path to the cloud-init vendor-data configuration file",
     )
     parser.add_argument(
+        "--config-network-config-path",
+        default=os.path.join(CLOUD_CONFIG_DIR, "network-config"),
+        help="""The path to the cloud-init network-config configuration file
+        that is used to configure the network settings of the image""",
+    )
+    parser.add_argument(
         "--config-seed-output-path",
         default=os.path.join(IMAGE_CONFIG_DIR, "seed.img"),
         help="""The path to the cloud-init output seed image file that is generated
@@ -279,6 +301,7 @@ def run_configure_image():
     user_data_path = args.config_user_data_path
     meta_data_path = args.config_meta_data_path
     vendor_data_path = args.config_vendor_data_path
+    network_config_path = args.config_network_config_path
     seed_output_path = args.config_seed_output_path
     qemu_cpu_model = args.qemu_cpu_model
 
@@ -293,9 +316,9 @@ def run_configure_image():
 
     # Ensure that the required output directories exists
     image_output_dir = os.path.dirname(image_path)
+    socket_dir = os.path.dirname(image_qemu_socket_path)
     image_config_dir = os.path.dirname(seed_output_path)
-
-    for d in [image_output_dir, image_config_dir]:
+    for d in [image_output_dir, socket_dir, image_config_dir]:
         if not exists(d):
             created, msg = makedirs(d)
             if not created:
@@ -303,7 +326,11 @@ def run_configure_image():
                 exit(PATH_CREATE_ERROR)
 
     generated_result, generated_msg = generate_image_configuration(
-        user_data_path, meta_data_path, vendor_data_path, seed_output_path
+        user_data_path,
+        meta_data_path,
+        vendor_data_path,
+        network_config_path,
+        seed_output_path,
     )
     if not generated_result:
         print(generated_msg)
