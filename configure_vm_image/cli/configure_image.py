@@ -227,13 +227,16 @@ def configure_image(image, configuration_path, qemu_socket_path, cpu_model="host
     return True
 
 
-def reset_image(image):
+def reset_image(image, reset_operations=None):
     """Resets the image such that it is ready to be started
     in production"""
     # Ensure that the virt-sysprep doesn't try to use libvirt
     # but qemu instead
     # LIBGUESTFS_BACKEND=direct
     reset_command = ["virt-sysprep", "-a", image]
+    if reset_operations:
+        reset_command.extend(["--operations", reset_operations])
+
     reset_result = run(reset_command)
     if reset_result["returncode"] != 0:
         print("Failed to reset image: {}".format(reset_result))
@@ -288,6 +291,11 @@ def run_configure_image():
         default="host",
         help="The default cpu model for configuring the image",
     )
+    parser.add_argument(
+        "--reset-operations",
+        default="defaults,-ssh-userdir",
+        help="The operations to perform during the reset operation",
+    )
 
     args = parser.parse_args()
 
@@ -299,6 +307,7 @@ def run_configure_image():
     staging_image_path = args.staging_image_path
     staging_socket_path = args.staging_socket_path
     qemu_cpu_model = args.qemu_cpu_model
+    reset_operations = args.reset_operations
 
     # Ensure that the image to configure exists
     if not exists(image_path):
@@ -337,7 +346,7 @@ def run_configure_image():
         print(CONFIGURE_IMAGE_ERROR_MSG.format(image_path, "failed to configure image"))
         exit(CONFIGURE_IMAGE_ERROR)
 
-    reset = reset_image(image_path)
+    reset = reset_image(image_path, reset_operations=reset_operations)
     if not reset:
         print(RESET_IMAGE_ERROR_MSG.format(image_path, "failed to reset image"))
         exit(RESET_IMAGE_ERROR)
