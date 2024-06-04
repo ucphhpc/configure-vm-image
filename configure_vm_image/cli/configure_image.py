@@ -83,13 +83,19 @@ def generate_image_configuration(
     # Setup the cloud init configuration
     # Generate a disk with user-supplied data
     if not exists(user_data_path):
-        return PATH_NOT_FOUND_ERROR, PATH_NOT_FOUND_ERROR_MSG.format(user_data_path)
+        return PATH_NOT_FOUND_ERROR, PATH_NOT_FOUND_ERROR_MSG.format(
+            user_data_path, "failed to find the user-data path"
+        )
 
     if not exists(meta_data_path):
-        return PATH_NOT_FOUND_ERROR, PATH_NOT_FOUND_ERROR_MSG.format(meta_data_path)
+        return PATH_NOT_FOUND_ERROR, PATH_NOT_FOUND_ERROR_MSG.format(
+            meta_data_path, "failed to find the meta-data path"
+        )
 
     if not exists(vendor_data_path):
-        return PATH_NOT_FOUND_ERROR, PATH_NOT_FOUND_ERROR_MSG.format(vendor_data_path)
+        return PATH_NOT_FOUND_ERROR, PATH_NOT_FOUND_ERROR_MSG.format(
+            vendor_data_path, "failed to find the vendor-data path"
+        )
 
     if exists(network_config_path):
         return create_cloud_init_disk(
