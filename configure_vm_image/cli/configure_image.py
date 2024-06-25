@@ -21,23 +21,37 @@ SCRIPT_NAME = __file__
 
 
 def create_cloud_init_disk(
-    user_data_path,
-    meta_data_path,
-    vendor_data_path,
     output_path,
+    user_data_path=None,
+    meta_data_path=None,
+    vendor_data_path=None,
     network_config_path=None,
 ):
-    # Generated the configuration image
+    # Generated the configuration iso image
+    # Notice that we label the iso cidata to ensure that cloud-init
+    # recognizes the disk as a configuration disk
+    if os.uname().sysname == "Darwin":
+        create_iso_command = "mkisofs"
+    else:
+        create_iso_command = "genisoimage"
     cloud_init_command = [
-        "cloud-localds",
+        create_iso_command,
+        "-output",
         output_path,
-        user_data_path,
-        meta_data_path,
         "-V",
-        vendor_data_path,
+        "cidata",
+        "--joliet",
+        "--rock",
     ]
+
+    if user_data_path:
+        cloud_init_command.append(user_data_path)
+    if meta_data_path:
+        cloud_init_command.append(meta_data_path)
+    if vendor_data_path:
+        cloud_init_command.append(vendor_data_path)
     if network_config_path:
-        cloud_init_command.extend(["-N", network_config_path])
+        cloud_init_command.append(network_config_path)
 
     localds_result = run(cloud_init_command, format_output_str=True)
     if localds_result["returncode"] != "0":
@@ -99,15 +113,18 @@ def generate_image_configuration(
 
     if exists(network_config_path):
         return create_cloud_init_disk(
-            user_data_path,
-            meta_data_path,
-            vendor_data_path,
             output_path,
+            user_data_path=user_data_path,
+            meta_data_path=meta_data_path,
+            vendor_data_path=vendor_data_path,
             network_config_path=network_config_path,
         )
     else:
         return create_cloud_init_disk(
-            user_data_path, meta_data_path, vendor_data_path, output_path
+            output_path,
+            user_data_path=user_data_path,
+            meta_data_path=meta_data_path,
+            vendor_data_path=vendor_data_path,
         )
 
 
@@ -138,10 +155,11 @@ def configure_vm(
     image,
     configuration_path,
     qemu_socket_path,
-    cpu_model,
     output_queue,
     configure_vm_name="vm",
+    cpu_model=None,
     memory="2048",
+    extra_disks=None,
 ):
     """This launches a subprocess that configures the VM image on boot."""
     kvm_command = discover_kvm_command()
@@ -149,8 +167,6 @@ def configure_vm(
         kvm_command,
         "-name",
         configure_vm_name,
-        "-cpu",
-        cpu_model,
         "-m",
         memory,
         "-nographic",
@@ -160,9 +176,18 @@ def configure_vm(
         "unix:{},server,nowait".format(qemu_socket_path),
         "-hda",
         image,
-        "-hdb",
+        "-cdrom",
         configuration_path,
     ]
+    if cpu_model:
+        configure_command.extend(["-cpu", cpu_model])
+
+    if kvm_command == "qemu-system-x86_64" and cpu_model == "host":
+        configure_command.append("-enable-kvm")
+
+    if extra_disks:
+        for disk in extra_disks.split(","):
+            configure_command.extend(["-drive", "file={}".format(disk)])
 
     configuring_results = run_popen(
         configure_command, stdout=subprocess.PIPE, universal_newlines=True, bufsize=1
@@ -205,7 +230,7 @@ def shutdown_vm(input_queue, qemu_socket_path):
     print("Finished the shutdown VM process")
 
 
-def configure_image(image, configuration_path, qemu_socket_path, cpu_model="host"):
+def configure_image(image, configuration_path, qemu_socket_path, **kwargs):
     """Configures the image by booting the image with qemu to allow
     for cloud init to apply the configuration"""
     queue = mp.Queue()
@@ -215,9 +240,9 @@ def configure_image(image, configuration_path, qemu_socket_path, cpu_model="host
             image,
             configuration_path,
             qemu_socket_path,
-            cpu_model,
             queue,
         ),
+        kwargs=kwargs,
     )
     shutdowing_vm = mp.Process(target=shutdown_vm, args=(queue, qemu_socket_path))
 
@@ -257,50 +282,61 @@ def run_configure_image():
     )
     parser.add_argument(
         "image_path",
-        help="The path to the image that is to be configured",
+        help="The path to the image that is to be configured.",
     )
     parser.add_argument(
         "--config-user-data-path",
         default=os.path.join(CLOUD_INIT_DIR, "user-data"),
-        help="The path to the cloud-init user-data configuration file",
+        help="The path to the cloud-init user-data configuration file.",
     )
     parser.add_argument(
         "--config-meta-data-path",
         default=os.path.join(CLOUD_INIT_DIR, "meta-data"),
-        help="The path to the cloud-init meta-data configuration file",
+        help="The path to the cloud-init meta-data configuration file.",
     )
     parser.add_argument(
         "--config-vendor-data-path",
         default=os.path.join(CLOUD_INIT_DIR, "vendor-data"),
-        help="The path to the cloud-init vendor-data configuration file",
+        help="The path to the cloud-init vendor-data configuration file.",
     )
     parser.add_argument(
         "--config-network-config-path",
         default=os.path.join(CLOUD_INIT_DIR, "network-config"),
         help="""The path to the cloud-init network-config configuration file
-        that is used to configure the network settings of the image""",
+        that is used to configure the network settings of the image.""",
     )
     parser.add_argument(
         "--staging-image-path",
-        default=os.path.join(CONFIGURE_IMAGE_TMP_DIR, "seed.img"),
-        help="""The path to the cloud-init output seed image file that is generated
-        based on the data defined in the user-data, meta-data, vendor-data, and network-config files. This seed image file is then subsequently used to configure the defined input image.""",
+        default=os.path.join(CONFIGURE_IMAGE_TMP_DIR, "cidata.iso"),
+        help="""The path to the cloud-init output iso image file that is generated
+        based on the data defined in the user-data, meta-data, vendor-data, and network-config files.
+        This seed iso file is then subsequently used to configure the defined input image.""",
     )
     parser.add_argument(
         "--staging-socket-path",
         default=os.path.join(CONFIGURE_IMAGE_TMP_DIR, "qemu-monitor-socket"),
         help="The path to where the QEMU monitor socket should be placed which is used to send commands to the running image while it is being configured.",
     )
-    # # https://qemu-project.gitlab.io/qemu/system/qemu-cpu-models.html
+    # https://qemu-project.gitlab.io/qemu/system/qemu-cpu-models.html
     parser.add_argument(
         "--qemu-cpu-model",
-        default="host",
-        help="The default cpu model for configuring the image",
+        default=None,
+        help="The cpu model to use for virtualization when configuring the image.",
+    )
+    parser.add_argument(
+        "--configure-vm-memory",
+        default="2048",
+        help="The amount of memory to allocate to the VM when configuring the image.",
     )
     parser.add_argument(
         "--reset-operations",
         default="defaults,-ssh-userdir",
-        help="The operations to perform during the reset operation",
+        help="The operations to perform during the reset operation.",
+    )
+    parser.add_argument(
+        "--extra-disks",
+        default=None,
+        help="The extra disks to setup during the VM configuration.",
     )
 
     args = parser.parse_args()
@@ -313,7 +349,9 @@ def run_configure_image():
     staging_image_path = args.staging_image_path
     staging_socket_path = args.staging_socket_path
     qemu_cpu_model = args.qemu_cpu_model
+    configure_vm_memory = args.configure_vm_memory
     reset_operations = args.reset_operations
+    extra_disks = args.extra_disks
 
     # Ensure that the image to configure exists
     if not exists(image_path):
@@ -325,9 +363,9 @@ def run_configure_image():
         exit(PATH_NOT_FOUND_ERROR)
 
     # Ensure that the required output directories exists
-    seed_image_dir = os.path.dirname(staging_image_path)
+    cidata_iso_dir = os.path.dirname(staging_image_path)
     configure_socket_dir = os.path.dirname(staging_socket_path)
-    for d in [seed_image_dir, configure_socket_dir]:
+    for d in [cidata_iso_dir, configure_socket_dir]:
         if not exists(d):
             created, msg = makedirs(d)
             if not created:
@@ -346,7 +384,12 @@ def run_configure_image():
         exit(generated_result)
 
     configured = configure_image(
-        image_path, staging_image_path, staging_socket_path, cpu_model=qemu_cpu_model
+        image_path,
+        staging_image_path,
+        staging_socket_path,
+        cpu_model=qemu_cpu_model,
+        memory=configure_vm_memory,
+        extra_disks=extra_disks,
     )
     if not configured:
         print(CONFIGURE_IMAGE_ERROR_MSG.format(image_path, "failed to configure image"))
