@@ -20,6 +20,21 @@ from configure_vm_image.utils.io import exists, makedirs, which
 SCRIPT_NAME = __file__
 
 
+def discover_create_iso_command():
+    """Discovers the kvm command on the system"""
+    if os.uname().sysname == "Darwin":
+        create_iso_command = "mkisofs"
+    else:
+        create_iso_command = "genisoimage"
+    if not which(create_iso_command):
+        raise FileNotFoundError(
+            "Failed to find the {} command on the system. Please ensure that it is installed".format(
+                create_iso_command
+            )
+        )
+    return create_iso_command
+
+
 def create_cloud_init_disk(
     output_path,
     user_data_path=None,
@@ -30,10 +45,7 @@ def create_cloud_init_disk(
     # Generated the configuration iso image
     # Notice that we label the iso cidata to ensure that cloud-init
     # recognizes the disk as a configuration disk
-    if os.uname().sysname == "Darwin":
-        create_iso_command = "mkisofs"
-    else:
-        create_iso_command = "genisoimage"
+    create_iso_command = discover_create_iso_command()
     cloud_init_command = [
         create_iso_command,
         "-output",
