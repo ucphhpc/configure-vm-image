@@ -1,7 +1,7 @@
 import argparse
 import os
 import socket
-from configure_vm_image.common.defaults import CLOUD_INIT_DIR, PACKAGE_NAME
+from configure_vm_image.common.defaults import CLOUD_INIT_DIR, PACKAGE_NAME, TMP_DIR
 from configure_vm_image.common.errors import (
     PATH_CREATE_ERROR,
     PATH_CREATE_ERROR_MSG,
@@ -39,7 +39,6 @@ def create_cloud_init_disk(
     meta_data_path=None,
     vendor_data_path=None,
     network_config_path=None,
-    verbose=False,
 ):
     # Generated the configuration iso image
     # Notice that we label the iso cidata to ensure that cloud-init
@@ -63,7 +62,6 @@ def create_cloud_init_disk(
         cloud_init_command.append(vendor_data_path)
     if network_config_path:
         cloud_init_command.append(network_config_path)
-
     success, result = run(cloud_init_command)
     if not success:
         return PATH_CREATE_ERROR, PATH_CREATE_ERROR_MSG.format(
@@ -152,7 +150,7 @@ def read_socket_until_empty(socket, buffer_size=1024):
     return msg
 
 
-def configure_vm(name, image, configuration_path, **kwargs):
+def configure_vm(name, image, **kwargs):
     """This launches a subprocess that configures the VM image on boot."""
     configure_vm_command = discover_configure_vm_command()
     create_command = [configure_vm_command, "instance", "create", name, image]
@@ -203,15 +201,14 @@ def shutdown_vm(input_queue, qemu_socket_path):
     print("Finished the shutdown VM process")
 
 
-def configure_image(name, image, configuration_path, **configure_kwargs):
+def configure_image(name, image, **configure_kwargs):
     """Configures the image using the configuration path"""
-    configure_result, configure_msg = configure_vm(
-        name, image, configuration_path, **configure_kwargs
-    )
+    configure_result, configure_msg = configure_vm(name, image, **configure_kwargs)
     if not configure_result:
         print("Failed to configure the image: {}".format(name))
         return False, configure_msg
     return True, configure_msg
+
 
 def finished_configure(log_file_path):
     """Waits for the configuration process to finish"""
@@ -281,6 +278,12 @@ def run_configure_image():
         This seed iso file is then subsequently used to configure the defined input image.""",
     )
     parser.add_argument(
+        "--configure-vm-log-path",
+        "-cv-log",
+        default=os.path.join(TMP_DIR, "configure-vm.log"),
+        help="""The path to the log file that is used to log the output of the configuring VM.""",
+    )
+    parser.add_argument(
         "--configure-vm-name",
         "-n",
         default=PACKAGE_NAME,
@@ -331,6 +334,7 @@ def run_configure_image():
     vendor_data_path = args.config_vendor_data_path
     network_config_path = args.config_network_config_path
     cloud_init_iso_output_path = args.cloud_init_iso_output_path
+    log_file_path = args.configure_vm_log_path
     configure_vm_name = args.configure_vm_name
     configure_vm_template = args.configure_vm_template
     configure_vm_vcpus = args.configure_vm_vcpus
@@ -392,6 +396,12 @@ def run_configure_image():
             )
         )
         network_config_path = None
+    if verbose:
+        print(
+            "Generating the cloud-init iso image at: {}".format(
+                cloud_init_iso_output_path
+            )
+        )
 
     generated_result, generated_msg = generate_image_configuration(
         cloud_init_iso_output_path,
@@ -400,17 +410,22 @@ def run_configure_image():
         vendor_data_path=vendor_data_path,
         network_config_path=network_config_path,
     )
+    if verbose:
+        print(generated_msg)
     if not generated_result:
         print(generated_msg)
         exit(generated_result)
-    if verbose:
-        print(generated_msg)
+
+    extra_template_path_values = {
+        "log_file_path": log_file_path,
+        "cd_iso_path": cloud_init_iso_output_path,
+    }
 
     configured, configured_msg = configure_image(
         configure_vm_name,
         image_path,
-        cloud_init_iso_output_path,
         template_path=configure_vm_template,
+        extra_template_path_values=extra_template_path_values,
         cpu_mode=configure_vm_cpu_model,
         memory_size=configure_vm_memory,
     )
