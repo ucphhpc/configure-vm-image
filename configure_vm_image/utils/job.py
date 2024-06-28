@@ -1,8 +1,36 @@
+import json
 import subprocess
+import datetime
 
 
-def __format_output__(result, format_output_str=False):
-    command_results = {}
+def __to_str__(o):
+    if hasattr(o, "asdict"):
+        return o.asdict()
+    if isinstance(o, datetime.datetime):
+        return o.__str__()
+    if isinstance(o, bytes):
+        return o.decode("utf-8")
+
+
+def __format_output__(output, format_="str"):
+    if format_ == "str":
+        if isinstance(output, bytes):
+            return output.decode("utf-8")
+        if isinstance(output, list):
+            return ",".join(output)
+        if isinstance(output, dict):
+            formatted_output = {}
+            for key, value in output.items():
+                formatted_output[key] = str(value)
+            return formatted_output
+        if isinstance(output, str):
+            return output
+    if format_ == "json":
+        return to_json(output)
+
+
+def __extract_results__(result):
+    command_results = {"output": "", "error": "", "returncode": 1}
     if hasattr(result, "args"):
         command_results.update({"command": " ".join((getattr(result, "args")))})
     if hasattr(result, "returncode"):
@@ -17,24 +45,37 @@ def __format_output__(result, format_output_str=False):
         command_results.update({"communicate": getattr(result, "communicate")})
     if hasattr(result, "kill"):
         command_results.update({"kill": getattr(result, "kill")})
-
-    if format_output_str:
-        for key, value in command_results.items():
-            if key == "returncode" or key == "stderr" or key == "stdout":
-                command_results[key] = str(value)
     return command_results
 
 
-def run_popen(cmd, format_output_str=False, **run_kwargs):
-    result = subprocess.Popen(cmd, **run_kwargs)
-    return __format_output__(result, format_output_str=format_output_str)
+def to_json(content):
+    return json.loads(content)
 
 
-def check_call(cmd, format_output_str=False, **kwargs):
-    result = subprocess.check_call(cmd, **kwargs)
-    return __format_output__(result, format_output_str=format_output_str)
+def run_popen(cmd, output_format="str", **run_kwargs):
+    result = __extract_results__(subprocess.Popen(cmd, **run_kwargs))
+    return __format_output__(result, format_=output_format)
 
 
-def run(cmd, format_output_str=False, **run_kwargs):
-    result = subprocess.run(cmd, **run_kwargs)
-    return __format_output__(result, format_output_str=format_output_str)
+def check_call(cmd, output_format="str", **run_kwargs):
+    result = __extract_results__(subprocess.check_call(cmd, **run_kwargs))
+    return __format_output__(result, format_=output_format)
+
+
+def run(cmd, output_format="str", **run_kwargs):
+    if not output_format:
+        output_format = "str"
+    return_values = {"output": "", "error": ""}
+    result = __extract_results__(subprocess.run(cmd, **run_kwargs, capture_output=True))
+    if result["error"]:
+        return_values["error"] = __format_output__(
+            result["error"], format_=output_format
+        )
+    if result["output"]:
+        return_values["output"] = __format_output__(
+            result["output"], format_=output_format
+        )
+
+    if result["returncode"] != 0:
+        return False, return_values
+    return True, return_values

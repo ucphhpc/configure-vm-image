@@ -1,5 +1,6 @@
 import os
 import shutil
+import json
 
 
 def makedirs(path):
@@ -11,9 +12,12 @@ def makedirs(path):
     return False, "Failed to create the directory path: {}".format(path)
 
 
-def load(path, mode="r", readlines=False, handler=None, **load_kwargs):
+def load(path, mode="r", readlines=False, handler=None, opener=None, **load_kwargs):
+    if not opener:
+        opener = open
+
     try:
-        with open(path, mode) as fh:
+        with opener(path, mode) as fh:
             if handler:
                 return handler.load(fh, **load_kwargs)
             if readlines:
@@ -21,6 +25,17 @@ def load(path, mode="r", readlines=False, handler=None, **load_kwargs):
             return fh.read()
     except Exception as err:
         print("Failed to load file: {} - {}".format(path, err))
+    return False
+
+
+def load_json(path, opener=None):
+    if not opener:
+        opener = open
+    try:
+        with opener(path, "r") as fh:
+            return json.load(fh)
+    except IOError as err:
+        print("Failed to load json: {} - {}".format(path, err))
     return False
 
 
