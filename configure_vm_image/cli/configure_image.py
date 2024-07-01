@@ -18,7 +18,7 @@ SCRIPT_NAME = __file__
 
 
 def discover_create_iso_command():
-    """Discovers the kvm command on the system"""
+    """Discovers the command to generate an iso on the system"""
     if os.uname().sysname == "Darwin":
         create_iso_command = "mkisofs"
     else:
@@ -114,20 +114,6 @@ def generate_image_configuration(
     )
 
 
-def discover_kvm_command():
-    """Discovers the kvm command on the system"""
-    kvm_command = "kvm"
-    if not which(kvm_command):
-        kvm_command = "qemu-kvm"
-    if not which(kvm_command):
-        kvm_command = "qemu-system-x86_64"
-    if not which(kvm_command):
-        raise FileNotFoundError(
-            "Failed to find the kvm command on the system. Please ensure that it is installed"
-        )
-    return kvm_command
-
-
 def discover_vm_orchestrator():
     """Discovers the kvm command on the system"""
     orchestrator = "libvirt-provider"
@@ -138,15 +124,6 @@ def discover_vm_orchestrator():
             )
         )
     return orchestrator
-
-
-def read_socket_until_empty(socket, buffer_size=1024):
-    msg = ""
-    response = socket.recv(buffer_size).decode("utf-8")
-    while response != "":
-        msg += response
-        response = socket.recv(buffer_size).decode("utf-8")
-    return msg
 
 
 def configure_vm(name, image, *args, **kwargs):
