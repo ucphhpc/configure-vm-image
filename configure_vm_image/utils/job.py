@@ -26,7 +26,11 @@ def __format_output__(output, format_="str"):
         if isinstance(output, str):
             return output
     if format_ == "json":
-        return to_json(output)
+        try:
+            return to_json(output)
+        except Exception as e:
+            print(f"Failed to convert output: {output} to json: {e}")
+        return None
 
 
 def __extract_results__(result):
@@ -66,7 +70,13 @@ def run(cmd, output_format="str", **run_kwargs):
     if not output_format:
         output_format = "str"
     return_values = {"output": "", "error": ""}
-    result = __extract_results__(subprocess.run(cmd, **run_kwargs, capture_output=True))
+    try:
+        raw_results = subprocess.run(cmd, **run_kwargs, capture_output=True)
+    except Exception as e:
+        return_values["error"] = f"Failed to run command: {cmd}, error: {e}"
+        return False, return_values
+
+    result = __extract_results__(raw_results)
     if result["error"]:
         return_values["error"] = __format_output__(
             result["error"], format_=output_format

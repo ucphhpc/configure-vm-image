@@ -1,6 +1,5 @@
 import argparse
 import os
-import socket
 from configure_vm_image.common.defaults import CLOUD_INIT_DIR, PACKAGE_NAME, TMP_DIR
 from configure_vm_image.common.errors import (
     PATH_CREATE_ERROR,
@@ -13,7 +12,7 @@ from configure_vm_image.common.errors import (
     RESET_IMAGE_ERROR_MSG,
 )
 from configure_vm_image.utils.job import run
-from configure_vm_image.utils.io import exists, makedirs, which
+from configure_vm_image.utils.io import exists, makedirs, which, load
 
 SCRIPT_NAME = __file__
 
@@ -129,16 +128,16 @@ def discover_kvm_command():
     return kvm_command
 
 
-def discover_configure_vm_command():
+def discover_vm_orchestrator():
     """Discovers the kvm command on the system"""
-    configure_vm_command = "libvirt-provider"
-    if not which(configure_vm_command):
+    orchestrator = "libvirt-provider"
+    if not which(orchestrator):
         raise FileNotFoundError(
             "Failed to find the {} command on the system. Please ensure that it is installed".format(
-                configure_vm_command
+                orchestrator
             )
         )
-    return configure_vm_command
+    return orchestrator
 
 
 def read_socket_until_empty(socket, buffer_size=1024):
@@ -150,10 +149,10 @@ def read_socket_until_empty(socket, buffer_size=1024):
     return msg
 
 
-def configure_vm(name, image, **kwargs):
+def configure_vm(name, image, *args, **kwargs):
     """This launches a subprocess that configures the VM image on boot."""
-    configure_vm_command = discover_configure_vm_command()
-    create_command = [configure_vm_command, "instance", "create", name, image]
+    vm_orchestrator = discover_vm_orchestrator()
+    create_command = [vm_orchestrator, "instance", "create", name, image, *args]
     for key, value in kwargs.items():
         if value:
             configure_key = "--{}".format(key).replace("_", "-")
@@ -165,63 +164,71 @@ def configure_vm(name, image, **kwargs):
     if "id" not in create_result["output"]["instance"]:
         return False, create_result["output"]
 
+    instance_id = create_result["output"]["instance"]["id"]
+
     start_command = [
-        configure_vm_command,
+        vm_orchestrator,
         "instance",
         "start",
-        create_result["output"]["instance"]["id"],
+        instance_id,
     ]
     start_success, start_result = run(start_command, output_format="json")
     if not start_success:
         return False, start_result["error"]
-    return True, start_result["output"]
+    return instance_id, start_result["output"]
 
 
-def shutdown_vm(input_queue, qemu_socket_path):
-    stopped = False
-    while not stopped:
-        value = input_queue.get()
-        print("Read configuring output: {}".format(value))
-        if "Activate the web console with:" in value:
-            print("Found finished configuration message: {}".format(value))
-            # Connect to the qemu monitor socket and send the shutdown command
-            _socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            try:
-                _socket.connect(qemu_socket_path)
-                _socket.sendall("system_powerdown\n".encode("utf-8"))
-                print("Sent shutdown message")
-                msg = read_socket_until_empty(_socket)
-                print("Received shutdown message: {}".format(msg))
-            except Exception as err:
-                print("Failed to connect to qemu monitor socket: {}".format(err))
-            finally:
-                _socket.close()
-        if "Power down" in value:
-            stopped = True
-    print("Finished the shutdown VM process")
-
-
-def configure_image(name, image, **configure_kwargs):
+def configure_image(name, image, *args, **configure_kwargs):
     """Configures the image using the configuration path"""
-    configure_result, configure_msg = configure_vm(name, image, **configure_kwargs)
+    configure_result, configure_msg = configure_vm(
+        name, image, *args, **configure_kwargs
+    )
     if not configure_result:
         print("Failed to configure the image: {}".format(name))
         return False, configure_msg
-    return True, configure_msg
+    return configure_result, configure_msg
 
 
 def finished_configure(log_file_path):
     """Waits for the configuration process to finish"""
     # Wait for the configuration process to finish
+    if not exists(log_file_path):
+        return False
+
+    first_marker = "Cloud-init v"
+    second_marker = "finished at"
+
     finished = False
     while not finished:
-        if not exists(log_file_path):
-            continue
-        with open(log_file_path, "r") as log_file:
-            log_content = log_file.read()
-            if "Finished configuring the image" in log_content:
+        content = load(log_file_path, readlines=True)
+        if isinstance(content, str):
+            if first_marker in content and second_marker in content:
+                finished = True
+        if isinstance(content, (list, set, tuple)):
+            for line in content:
+                if first_marker in line and second_marker in line:
+                    finished = True
+        if isinstance(content, bytes):
+            content = content.decode("utf-8", "ignore")
+            if first_marker in content and second_marker in content:
                 finished = True
     return finished
+
+
+def vm_action(action, name, *args, **kwargs):
+    vm_orchestrator = discover_vm_orchestrator()
+    command = [vm_orchestrator, "instance", action, name, *args]
+    for key, value in kwargs.items():
+        if key and value:
+            command.extend([key, value])
+        elif key and not value:
+            command.append(key)
+        elif value and not key:
+            command.append(value)
+    success, result = run(command, output_format="json")
+    if not success:
+        return False, result["error"]
+    return True, result["output"]
 
 
 def reset_image(image, reset_operations=None):
@@ -328,13 +335,19 @@ def run_configure_image():
     )
     args = parser.parse_args()
 
-    image_path = args.image_path
-    user_data_path = args.config_user_data_path
-    meta_data_path = args.config_meta_data_path
-    vendor_data_path = args.config_vendor_data_path
-    network_config_path = args.config_network_config_path
-    cloud_init_iso_output_path = args.cloud_init_iso_output_path
-    log_file_path = args.configure_vm_log_path
+    image_path = os.path.realpath(os.path.expanduser(args.image_path))
+    user_data_path = os.path.realpath(os.path.expanduser(args.config_user_data_path))
+    meta_data_path = os.path.realpath(os.path.expanduser(args.config_meta_data_path))
+    vendor_data_path = os.path.realpath(
+        os.path.expanduser(args.config_vendor_data_path)
+    )
+    network_config_path = os.path.realpath(
+        os.path.expanduser(args.config_network_config_path)
+    )
+    cloud_init_iso_output_path = os.path.realpath(
+        os.path.expanduser(args.cloud_init_iso_output_path)
+    )
+    log_file_path = os.path.realpath(os.path.expanduser(args.configure_vm_log_path))
     configure_vm_name = args.configure_vm_name
     configure_vm_template = args.configure_vm_template
     configure_vm_vcpus = args.configure_vm_vcpus
@@ -416,28 +429,59 @@ def run_configure_image():
         print(generated_msg)
         exit(generated_result)
 
-    extra_template_path_values = {
-        "log_file_path": log_file_path,
-        "cd_iso_path": cloud_init_iso_output_path,
-    }
+    if exists(log_file_path):
+        if verbose:
+            print(
+                f"The configuring log file: {log_file_path} already exists, increasing the file name"
+            )
+        incrementer = 1
+        while exists(log_file_path):
+            log_file_path = f"{log_file_path}.%s" % incrementer
+            incrementer += 1
+        if verbose:
+            print(f"Generated new log file path: {log_file_path}")
 
-    configured, configured_msg = configure_image(
+    configure_image_args = [
+        "--extra-template-path-values",
+        f"cd_iso_path={cloud_init_iso_output_path}",
+        f"log_file_path={log_file_path}",
+    ]
+
+    configured_id, configured_msg = configure_image(
         configure_vm_name,
         image_path,
+        *configure_image_args,
         template_path=configure_vm_template,
-        extra_template_path_values=extra_template_path_values,
         cpu_mode=configure_vm_cpu_model,
         memory_size=configure_vm_memory,
     )
     if verbose:
         print(configured_msg)
-    if not configured:
+    if not configured_id:
         print(CONFIGURE_IMAGE_ERROR_MSG.format(image_path, "failed to configure image"))
         exit(CONFIGURE_IMAGE_ERROR)
 
+    if verbose:
+        print("Waiting for the configuration process to finish")
     finished = finished_configure(log_file_path)
     if not finished:
         print("Failed to finish configuring the image")
+        exit(CONFIGURE_IMAGE_ERROR)
+    if verbose:
+        print(f"Finished configuring the image in the instance: {configured_id}")
+
+    shutdown, shutdown_msg = vm_action("stop", configured_id)
+    if not shutdown:
+        print(
+            f"Failed to shutdown the VM: {configured_id} after configuration: {shutdown_msg}"
+        )
+        exit(CONFIGURE_IMAGE_ERROR)
+
+    removed, remove_msg = vm_action("remove", configured_id)
+    if not removed:
+        print(
+            f"Failed to remove the VM: {configured_id} after configuration: {remove_msg}"
+        )
         exit(CONFIGURE_IMAGE_ERROR)
 
     reset_success, reset_results = reset_image(
