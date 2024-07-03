@@ -3,7 +3,7 @@ configure-vm-image
 ==================
 
 This package can be used for configuring existing virtual machine images.
-To generate new virtual machine images this configure tool, the `gen-vm-image <https://github.com/ucphhpc/gen-vm-image>`_ package can be used.
+Virtual machine images can be either downloaded straight from a distribution provider (see `Cloud-init Images <_cloud_init_images>`_) or generated via tools such as the `gen-vm-image <https://github.com/ucphhpc/gen-vm-image>`_.
 
 ------------
 Dependencies
@@ -15,7 +15,7 @@ The following dependencies are required to be installed on the system to use the
     - `virt-sysprep <https://linux.die.net/man/1/virt-sysprep>`_
 
 How to install each of these for a given distribution can be found
-`here <https://pkgs.org/search/?q=genisoimage>`_ and `here <https://pkgs.org/search/?q=guestfs-tools`_.
+`here <https://pkgs.org/search/?q=genisoimage>`_ and `here <https://pkgs.org/search/?q=guestfs-tools>`_.
 
 Dependency install scripts for various distributions can be found in the ``dep`` root directory of this package.
 
@@ -108,8 +108,9 @@ As can be gathered from the help output, ``configure-vm-image`` expects that eac
 If any of these configuration files are not present, the tool will skip that particular configuration file and continue on even if none are given.
 This means that the tool can be used to configure an image with only a subset of the configuration files or none at all.
 
+.. _cloud_init_images:
 -----------------
-Cloud-init images
+Cloud-init Images
 -----------------
 
 Most distributions have a publically available cloud-init image that can be downloaded. A subset highlight of these can be found below.
@@ -129,8 +130,8 @@ The user will have a password that is hashed and stored in the user-data file.
 
 An example of this can be found in the ``examples/basic-cloud-init`` directory of this package.
 But, before we can begin we need to have a virtual machine image that we want to configure.
-This can be created via the ``gen-vm-image <https://github.com/ucphhpc/gen-vm-image>`_ tool or by downloading an existing image from the internet as highlighted
-in the :ref:`Cloud-init images` section.
+This can be created via the `gen-vm-image <https://github.com/ucphhpc/gen-vm-image>`_ tool or by downloading an existing image from the internet as highlighted
+in the `Cloud-init Images <_cloud_init_images>`_ section.
 
 But, before we can begin, we need to install the dependencies for the tool::
     
