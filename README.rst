@@ -3,7 +3,7 @@ configure-vm-image
 ==================
 
 This package can be used for configuring existing virtual machine images.
-Virtual machine images can be either downloaded straight from a distribution provider (see `Cloud-init Images <_cloud_init_images>`_) or generated via tools such as the `gen-vm-image <https://github.com/ucphhpc/gen-vm-image>`_.
+Virtual machine images can be either downloaded straight from a distribution provider (see cloud_init_images_) or generated via tools such as the `gen-vm-image <https://github.com/ucphhpc/gen-vm-image>`_.
 
 ------------
 Dependencies
@@ -131,7 +131,7 @@ The user will have a password that is hashed and stored in the user-data file.
 An example of this can be found in the ``examples/basic-cloud-init`` directory of this package.
 But, before we can begin we need to have a virtual machine image that we want to configure.
 This can be created via the `gen-vm-image <https://github.com/ucphhpc/gen-vm-image>`_ tool or by downloading an existing image from the internet as highlighted
-in the `Cloud-init Images <_cloud_init_images>`_ section.
+in the cloud_init_images_ section.
 
 But, before we can begin, we need to install the dependencies for the tool::
     
