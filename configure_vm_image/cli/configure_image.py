@@ -126,10 +126,18 @@ def discover_vm_orchestrator():
     return orchestrator
 
 
-def configure_vm(name, image, *args, **kwargs):
+def configure_vm(name, image, *template_args, **kwargs):
     """This launches a subprocess that configures the VM image on boot."""
     vm_orchestrator = discover_vm_orchestrator()
-    create_command = [vm_orchestrator, "instance", "create", name, image, *args]
+    create_command = [
+        vm_orchestrator,
+        "instance",
+        "create",
+        name,
+        image,
+        "--extra-template-path-values",
+        *template_args,
+    ]
     for key, value in kwargs.items():
         if value:
             configure_key = "--{}".format(key).replace("_", "-")
@@ -155,10 +163,10 @@ def configure_vm(name, image, *args, **kwargs):
     return instance_id, start_result["output"]
 
 
-def configure_image(name, image, *args, **configure_kwargs):
+def configure_image(name, image, *template_args, **configure_kwargs):
     """Configures the image using the configuration path"""
     configure_result, configure_msg = configure_vm(
-        name, image, *args, **configure_kwargs
+        name, image, *template_args, **configure_kwargs
     )
     if not configure_result:
         print("Failed to configure the image: {}".format(name))
@@ -279,6 +287,16 @@ def run_configure_image():
         default=None,
         help="""The path to the template file that specifies how the configuring VM should be launched.""",
     )
+    parser.add_argument(
+        "--configure-vm-template-values",
+        "-tv",
+        metavar="KEY=VALUE",
+        nargs="+",
+        default=[],
+        help="""A set of key=value pair arguments that should be passed to the --configure-vm-template.
+        If a value contains spaces, you should define it with quotes.
+        """,
+    )
     # https://qemu-project.gitlab.io/qemu/system/qemu-cpu-models.html
     parser.add_argument(
         "--configure-vm-cpu-model",
@@ -327,6 +345,7 @@ def run_configure_image():
     log_file_path = os.path.realpath(os.path.expanduser(args.configure_vm_log_path))
     configure_vm_name = args.configure_vm_name
     configure_vm_template = args.configure_vm_template
+    configure_vm_template_values = args.configure_vm_template_values
     configure_vm_vcpus = args.configure_vm_vcpus
     configure_vm_cpu_model = args.configure_vm_cpu_model
     configure_vm_memory = args.configure_vm_memory
@@ -406,30 +425,30 @@ def run_configure_image():
         print(generated_msg)
         exit(generated_result)
 
-    if exists(log_file_path):
-        if verbose:
-            print(
-                f"The configuring log file: {log_file_path} already exists, increasing the file name"
-            )
-        incrementer = 1
-        while exists(log_file_path):
-            log_file_path = f"{log_file_path}.%s" % incrementer
-            incrementer += 1
-        if verbose:
-            print(f"Generated new log file path: {log_file_path}")
+    incrementer = 1
+    while exists(log_file_path):
+        if incrementer == 1:
+            if verbose:
+                print(
+                    f"The configuring log file: {log_file_path} already exists, increasing the designated file name"
+                )
+        log_file_path = f"{log_file_path}.%s" % incrementer
+        incrementer += 1
+    if verbose:
+        print(f"Generated new log file path: {log_file_path}")
 
-    configure_image_args = [
-        "--extra-template-path-values",
-        f"cd_iso_path={cloud_init_iso_output_path}",
-        f"log_file_path={log_file_path}",
-    ]
+    if "cd_iso_path" not in configure_vm_template_values:
+        configure_vm_template_values.append(f"cd_iso_path={cloud_init_iso_output_path}")
+    if "log_file_path" not in configure_vm_template_values:
+        configure_vm_template_values.append(f"log_file_path={log_file_path}")
 
     configured_id, configured_msg = configure_image(
         configure_vm_name,
         image_path,
-        *configure_image_args,
+        *configure_vm_template_values,
         template_path=configure_vm_template,
         cpu_mode=configure_vm_cpu_model,
+        num_vcpus=configure_vm_vcpus,
         memory_size=configure_vm_memory,
     )
     if verbose:

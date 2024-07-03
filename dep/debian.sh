@@ -1,11 +1,8 @@
 #!/bin/bash
 
-# The cloud-localds is used to generate the configuration image
-# for cloud-init
-apt install -y cloud-utils
+# genisoimage is required to create the cloud-init ISO image that is used
+# to configure the VM on first boot
+apt install -y genisoimage
 
-# The emulator used to start and configure the image
-# apt install -y kvm
-
-# virt-sysprep is provided by libguestfs-tools
-apt install -y libguestfs-tools
+# virt-sysprep is provided by guestfs-tools
+apt install -y guestfs-tools

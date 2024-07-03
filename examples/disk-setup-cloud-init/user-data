@@ -1,0 +1,44 @@
+#cloud-config
+system_info:
+  default_user:
+    name: default_user
+    home: /home/default_user
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    # Can for instance use mkpasswd -m sha-512 to generate a hashed password
+    passwd: "hashed_password_here"
+    lock_passwd: false
+    shell: /bin/bash
+ssh_pwauth: False
+
+# Setup for additional disk that should be formatted
+# https://cloudinit.readthedocs.io/en/latest/reference/modules.html#disk-setup
+disk_setup:
+  /dev/vdb:
+    table_type: 'gpt'
+    layout: True
+    overwrite: False
+  /dev/vdc:
+    table_type: 'gpt'
+    layout: True
+    overwrite: False
+  /dev/vdd:
+    table_type: 'gpt'
+    layout: True
+    overwrite: False
+
+fs_setup:
+  - label: disk2
+    device: /dev/vdb
+    partition: auto
+    filesystem: xfs
+    overwrite: False
+  - label: disk3
+    device: /dev/vdc
+    partition: auto
+    filesystem: xfs
+    overwrite: False
+  - label: disk4
+    device: /dev/vdd
+    partition: auto
+    filesystem: xfs
+    overwrite: False

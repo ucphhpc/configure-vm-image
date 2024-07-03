@@ -2,79 +2,108 @@
 configure-vm-image
 ==================
 
-This package can be used for configuring virtual machine images.
+This package can be used for configuring existing virtual machine images.
+To generate new virtual machine images this configure tool, the `gen-vm-image <https://github.com/ucphhpc/gen-vm-image>`_ package can be used.
 
 ------------
 Dependencies
 ------------
 
-The dependencies required to use this package to generate virtual machine images
-can be found in the `dep` directory for the supported distributions.
+The following dependencies are required to be installed on the system to use the ``configure-vm-image`` command:
+
+    - `genisoimage <https://linux.die.net/man/1/genisoimage>`_
+    - `virt-sysprep <https://linux.die.net/man/1/virt-sysprep>`_
+
+How to install each of these for a given distribution can be found
+`here <https://pkgs.org/search/?q=genisoimage>`_ and `here <https://pkgs.org/search/?q=guestfs-tools`_.
+
+Dependency install scripts for various distributions can be found in the ``dep`` root directory of this package.
+
+-------
+Install
+-------
+
+The tool itself can be installed either via pip::
+
+    pip install `configure-vm-image <https://pypi.org/project/configure-vm-image/>`_
+
+or by cloning the repository and running the following command in the root directory::
+
+    make install
+
+If no argument is given to the ``make install`` command, the package will be installed inside a virtual environment called ``venv`` in the root directory of the package.
+The ``VENV_NAME`` argument can be used to specify a different name for the virtual environment inwhich the package is installed.
 
 -----
-Setup
+Usage
 -----
 
-The ``qemu-kvm`` command might not be available in the default PATH.
-This can be determined via the ``which`` command::
+Upon installation, the ``configure-vm-image`` command is installed and can be used to configure an existing virtual machine image.
+To generate such an image, the `gen-vm-image <https://github.com/ucphhpc/gen-vm-image>`_ tool is available.
 
-    which qemu-kvm
+To configure the existing image itself, ``configure-vm-image`` uses the `cloud-init <https://cloudinit.readthedocs.io/en/latest/index.html>`_ tool to customize the image.
+`cloud-init <https://cloudinit.readthedocs.io/en/latest/index.html>`_ itself achives this by running a set of scripts upon image boot that utilises a set of preset configuration files.
+These configuration files includes::
 
-If the command is not available, the qemu-kvm might be in a different location that is not part of
-your current PATH. In this case, you can create a symbolic link to the qemu-kvm command in a directory
-An example of this could be::
+    - user-data
+    - meta-data
+    - vendor-data
+    - network-config
 
-    ln -s /usr/share/bash-completion/completions/qemu-kvm /usr/local/bin/qemu-kvm
+Therefore, the ``configure-vm-image`` tool attempts to load each of these files when launched from the given parameter set paths for each of them.
+The parameter names for these can be discovered by running the command with the ``--help`` flag::
 
-The ``configure-vm-image`` command can be used to generate virtual machine images for the supported distributions.
-
----------------------------------
-Configure a Virtual Machine Image
----------------------------------
-
-To configure a built VM image disk, the ``configure-vm-image`` command can be used.
-This tool uses cloud-init to configure the image, and the configuration files for cloud-init should be defined beforehand.
-Therefore, the tool requires that the to be configured image supports cloud-init, a list of various distributions cloud-init images can be found below.
-
-- `Rocky <https://download.rockylinux.org/pub/rocky/>`_
-- `Debian <https://cloud.debian.org/images/cloud/>`_
-- `Ubuntu <https://cloud-images.ubuntu.com/>`_
-- `Fedora <https://mirrors.dotsrc.org/fedora-enchilada/linux/releases/39/Cloud/>`_
-
-
-The default location from where these are expected to be found can be discovered by running the command with the ``--help`` flag::
-
-    usage: configure_image.py [-h] [--config-user-data-path CONFIG_USER_DATA_PATH]
-                                   [--config-meta-data-path CONFIG_META_DATA_PATH]
-                                   [--config-vendor-data-path CONFIG_VENDOR_DATA_PATH]
-                                   [--config-network-config-path CONFIG_NETWORK_CONFIG_PATH]
-                                   [--staging-image-path STAGING_IMAGE_PATH]
-                                   [--staging-socket-path STAGING_SOCKET_PATH]
-                                   [--qemu-cpu-model QEMU_CPU_MODEL]
-                                   image_path
+    usage: configure_image.py [-h]
+                            [--config-user-data-path CONFIG_USER_DATA_PATH]
+                            [--config-meta-data-path CONFIG_META_DATA_PATH]
+                            [--config-vendor-data-path CONFIG_VENDOR_DATA_PATH]
+                            [--config-network-config-path CONFIG_NETWORK_CONFIG_PATH]
+                            [--cloud-init-iso-output-path CLOUD_INIT_ISO_OUTPUT_PATH]
+                            [--configure-vm-log-path CONFIGURE_VM_LOG_PATH]
+                            [--configure-vm-name CONFIGURE_VM_NAME]
+                            [--configure-vm-template CONFIGURE_VM_TEMPLATE]
+                            [--configure-vm-template-values KEY=VALUE [KEY=VALUE ...]]
+                            [--configure-vm-cpu-model CONFIGURE_VM_CPU_MODEL]
+                            [--configure-vm-vcpus CONFIGURE_VM_VCPUS]
+                            [--configure-vm-memory CONFIGURE_VM_MEMORY]
+                            [--reset-operations RESET_OPERATIONS]
+                            [--verbose]
+                            image_path
 
     positional arguments:
-    image_path            The path to the image that is to be configured
+    image_path            The path to the image that is to be configured.
 
     options:
     -h, --help            show this help message and exit
     --config-user-data-path CONFIG_USER_DATA_PATH
-                            The path to the cloud-init user-data configuration file (default: cloud-init/user-data)
+                            The path to the cloud-init user-data configuration file. (default: cloud-init/user-data)
     --config-meta-data-path CONFIG_META_DATA_PATH
-                            The path to the cloud-init meta-data configuration file (default: cloud-init/meta-data)
+                            The path to the cloud-init meta-data configuration file. (default: cloud-init/meta-data)
     --config-vendor-data-path CONFIG_VENDOR_DATA_PATH
-                            The path to the cloud-init vendor-data configuration file (default: cloud-init/vendor-data)
+                            The path to the cloud-init vendor-data configuration file. (default: cloud-init/vendor-data)
     --config-network-config-path CONFIG_NETWORK_CONFIG_PATH
-                            The path to the cloud-init network-config configuration file that is used to configure the network settings of the image (default: cloud-init/network-config)
-    --staging-image-path STAGING_IMAGE_PATH
-                            The path to the cloud-init output seed image file that is generated based on the data defined in the user-data, meta-data, vendor-data, and network-config files. This seed image file is then subsequently used to configure the defined input image. (default:
-                            /tmp/configure-vm-image/seed.img)
-    --staging-socket-path STAGING_SOCKET_PATH
-                            The path to where the QEMU monitor socket should be placed which is used to send commands to the running image while it is being configured. (default: /tmp/configure-vm-image/qemu-monitor-socket)
-    --qemu-cpu-model QEMU_CPU_MODEL
-                            The default cpu model for configuring the image (default: host)
+                            The path to the cloud-init network-config configuration file that is used to configure the network settings of the image. (default: cloud-init/network-config)
+    --cloud-init-iso-output-path CLOUD_INIT_ISO_OUTPUT_PATH, -ci-output CLOUD_INIT_ISO_OUTPUT_PATH
+                            The path to the cloud-init output iso image file that is generated based on the data defined in the user-data, meta-data, vendor-data, and network-config files. This seed iso file is then subsequently used to
+                            configure the defined input image. (default: cloud-init/cidata.iso)
+    --configure-vm-log-path CONFIGURE_VM_LOG_PATH, -cv-log CONFIGURE_VM_LOG_PATH
+                            The path to the log file that is used to log the output of the configuring VM. (default: tmp/configure-vm.log)
+    --configure-vm-name CONFIGURE_VM_NAME, -n CONFIGURE_VM_NAME
+                            The name of the VM that is used to configure the image. (default: configure-vm-image)
+    --configure-vm-template CONFIGURE_VM_TEMPLATE, -t CONFIGURE_VM_TEMPLATE
+                            The path to the template file that specifies how the configuring VM should be launched. (default: None)
+    --configure-vm-template-values KEY=VALUE [KEY=VALUE ...], -tv KEY=VALUE [KEY=VALUE ...]
+                            A set of key=value pair arguments that should be passed to the --configure-vm-template. If a value contains spaces, you should define it with quotes. (default: [])
+    --configure-vm-cpu-model CONFIGURE_VM_CPU_MODEL, -cv-cpu CONFIGURE_VM_CPU_MODEL
+                            The cpu model to use for virtualization when configuring the image. (default: None)
+    --configure-vm-vcpus CONFIGURE_VM_VCPUS, -cv-vcpus CONFIGURE_VM_VCPUS
+                            The number of virtual CPUs to allocate to the VM when configuring the image. (default: 1)
+    --configure-vm-memory CONFIGURE_VM_MEMORY, -cv-m CONFIGURE_VM_MEMORY
+                            The amount of memory to allocate to the VM when configuring the image. (default: 2048MiB)
+    --reset-operations RESET_OPERATIONS
+                            The operations to perform during the reset operation. (default: defaults,-ssh-userdir)
+    --verbose, -v         Flag to enable verbose output (default: False)
 
-To configure the image, the ``configure-vm-image`` tool creates a seed disk image with the cloud-init configuration and subsequently starts the ``image_path`` with the mounted seed image.
-This process then runs until the cloud-init configuration is complete and the image is shut down.
-
-The configuration files for cloud-init should be defined beforehand and the tool requires that the to-be-configured image supports cloud-init.
+As can be gathered from the help output, ``configure-vm-image`` expects that each of these `cloud-init <https://cloudinit.readthedocs.io/en/latest/index.html>`_ configuration files are present in a ``cloud-init`` directory in the current path when ``configure-vm-image`` is executed.
+If any of these configuration files are not present, the tool will skip that particular configuration file and continue on even if none are given.
+This means that the tool can be used to configure an image with only a subset of the configuration files or none at all.

@@ -9,7 +9,7 @@ ARGS=
 
 all: init install-dep install
 
-init: venv
+init:
 	mkdir ${CONFIGURE_IMAGES_DIR}
 
 clean:
@@ -20,10 +20,10 @@ clean:
 	rm -fr .pytest_cache
 	rm -fr tests/__pycache__
 
-configure:
+configure: venv
 	. ${VENV}/activate; configure-vm-image ${ARGS}
 
-dist:
+dist: venv
 	${VENV}/python setup.py sdist bdist_wheel
 
 distclean:
@@ -35,25 +35,25 @@ maintainer-clean:
 	${MAKE} venv-clean
 	${MAKE} clean
 
-install:
+install: venv
 	${VENV}/pip install .
 
-uninstall:
+uninstall: venv
 	${VENV}/pip uninstall -y configure-vm-image
 
-install-dev:
+install-dev: venv
 	${VENV}/pip install -r requirements-dev.txt
 
-install-dep:
+install-dep: venv
 	${VENV}/pip install -r requirements.txt
 
-uninstall-dep:
+uninstall-dep: venv
 	${VENV}/pip uninstall -r requirements.txt
 
-uninstalltest:
+uninstalltest: venv
 	${VENV}/pip uninstall -y -r tests/requirements.txt
 
-installtest:
+installtest: venv
 	${VENV}/pip install -r tests/requirements.txt
 
 test:
