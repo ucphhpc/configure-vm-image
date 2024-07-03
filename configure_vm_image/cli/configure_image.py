@@ -1,6 +1,6 @@
 import argparse
 import os
-from configure_vm_image.common.defaults import CLOUD_INIT_DIR, PACKAGE_NAME, TMP_DIR
+from configure_vm_image.common.defaults import CLOUD_INIT_DIR, PACKAGE_NAME, TMP_DIR, RES_DIR
 from configure_vm_image.common.errors import (
     PATH_CREATE_ERROR,
     PATH_CREATE_ERROR_MSG,
@@ -194,7 +194,7 @@ def finished_configure(log_file_path):
                 if first_marker in line and second_marker in line:
                     finished = True
         if isinstance(content, bytes):
-            content = content.decode("utf-8", "ignore")
+            content = content.decode("utf-8", errors="ignore")
             if first_marker in content and second_marker in content:
                 finished = True
     return finished
@@ -241,6 +241,15 @@ def run_configure_image():
         help="The path to the image that is to be configured.",
     )
     parser.add_argument(
+        "--image-format",
+        default=None,
+        help="The format of the image that is to be configured. The tool tries to automatically discover this if not set.",
+    )
+    parser.add_argument(
+        "--configure_vm_template-path",
+        default=os.path.join(RES_DIR, "configure-vm-template.xml.j2")
+    )
+    parser.add_argument(
         "--config-user-data-path",
         default=os.path.join(CLOUD_INIT_DIR, "user-data"),
         help="The path to the cloud-init user-data configuration file.",
@@ -262,6 +271,32 @@ def run_configure_image():
         that is used to configure the network settings of the image.""",
     )
     parser.add_argument(
+        "--configure-vm-name",
+        "-n",
+        default=PACKAGE_NAME,
+        help="""The name of the VM that is used to configure the image.""",
+    )
+    # https://qemu-project.gitlab.io/qemu/system/qemu-cpu-models.html
+    parser.add_argument(
+        "--configure-vm-cpu-model",
+        "-cv-cpu",
+        default=None,
+        help="""The cpu model to use for virtualization when configuring the image.""",
+    )
+    parser.add_argument(
+        "--configure-vm-vcpus",
+        "-cv-vcpus",
+        default="1",
+        type=str,
+        help="""The number of virtual CPUs to allocate to the VM when configuring the image.""",
+    )
+    parser.add_argument(
+        "--configure-vm-memory",
+        "-cv-m",
+        default="2048MiB",
+        help="""The amount of memory to allocate to the VM when configuring the image.""",
+    )
+    parser.add_argument(
         "--cloud-init-iso-output-path",
         "-ci-output",
         default=os.path.join(CLOUD_INIT_DIR, "cidata.iso"),
@@ -276,45 +311,14 @@ def run_configure_image():
         help="""The path to the log file that is used to log the output of the configuring VM.""",
     )
     parser.add_argument(
-        "--configure-vm-name",
-        "-n",
-        default=PACKAGE_NAME,
-        help="""The name of the VM that is used to configure the image.""",
-    )
-    parser.add_argument(
-        "--configure-vm-template",
-        "-t",
-        default=None,
-        help="""The path to the template file that specifies how the configuring VM should be launched.""",
-    )
-    parser.add_argument(
         "--configure-vm-template-values",
         "-tv",
         metavar="KEY=VALUE",
         nargs="+",
         default=[],
-        help="""A set of key=value pair arguments that should be passed to the --configure-vm-template.
+        help="""An additional set of key=value pair arguments that should be passed to the --configure-vm-template.
         If a value contains spaces, you should define it with quotes.
         """,
-    )
-    # https://qemu-project.gitlab.io/qemu/system/qemu-cpu-models.html
-    parser.add_argument(
-        "--configure-vm-cpu-model",
-        "-cv-cpu",
-        default=None,
-        help="""The cpu model to use for virtualization when configuring the image.""",
-    )
-    parser.add_argument(
-        "--configure-vm-vcpus",
-        "-cv-vcpus",
-        default=1,
-        help="""The number of virtual CPUs to allocate to the VM when configuring the image.""",
-    )
-    parser.add_argument(
-        "--configure-vm-memory",
-        "-cv-m",
-        default="2048MiB",
-        help="""The amount of memory to allocate to the VM when configuring the image.""",
     )
     parser.add_argument(
         "--reset-operations",
@@ -331,6 +335,8 @@ def run_configure_image():
     args = parser.parse_args()
 
     image_path = os.path.realpath(os.path.expanduser(args.image_path))
+    image_format = args.image_format
+    configure_vm_template_path = os.path.realpath(os.path.expanduser(args.configure_vm_template_path))
     user_data_path = os.path.realpath(os.path.expanduser(args.config_user_data_path))
     meta_data_path = os.path.realpath(os.path.expanduser(args.config_meta_data_path))
     vendor_data_path = os.path.realpath(
@@ -339,16 +345,15 @@ def run_configure_image():
     network_config_path = os.path.realpath(
         os.path.expanduser(args.config_network_config_path)
     )
+    configure_vm_name = args.configure_vm_name
+    configure_vm_vcpus = args.configure_vm_vcpus
+    configure_vm_cpu_model = args.configure_vm_cpu_model
+    configure_vm_memory = args.configure_vm_memory
     cloud_init_iso_output_path = os.path.realpath(
         os.path.expanduser(args.cloud_init_iso_output_path)
     )
     log_file_path = os.path.realpath(os.path.expanduser(args.configure_vm_log_path))
-    configure_vm_name = args.configure_vm_name
-    configure_vm_template = args.configure_vm_template
     configure_vm_template_values = args.configure_vm_template_values
-    configure_vm_vcpus = args.configure_vm_vcpus
-    configure_vm_cpu_model = args.configure_vm_cpu_model
-    configure_vm_memory = args.configure_vm_memory
     reset_operations = args.reset_operations
     verbose = args.verbose
 
@@ -360,6 +365,11 @@ def run_configure_image():
             )
         )
         exit(PATH_NOT_FOUND_ERROR)
+
+    if not image_format:
+        image_format = os.path.splitext(image_path)[1].replace(".", "")
+        if verbose:
+            print("Automatically discovered image format: {} to configure the disk image".format(image_format))
 
     # Ensure that the required output directories exists
     cidata_iso_dir = os.path.dirname(cloud_init_iso_output_path)
@@ -425,6 +435,12 @@ def run_configure_image():
         print(generated_msg)
         exit(generated_result)
 
+    if not exists(os.path.dirname(log_file_path)):
+        created, msg = makedirs(os.path.dirname(log_file_path))
+        if not created:
+            print(PATH_CREATE_ERROR_MSG.format(os.path.dirname(log_file_path), msg))
+            exit(PATH_CREATE_ERROR)
+
     incrementer = 1
     while exists(log_file_path):
         if incrementer == 1:
@@ -436,7 +452,10 @@ def run_configure_image():
         incrementer += 1
     if verbose:
         print(f"Generated new log file path: {log_file_path}")
+        print(f"Using the VM template description: {configure_vm_template_path}")
 
+    # Ensure that the required template values are set for the cloud-init iso image
+    # and for the VM log file that is monitored to tell when the configuration process is finished
     if "cd_iso_path" not in configure_vm_template_values:
         configure_vm_template_values.append(f"cd_iso_path={cloud_init_iso_output_path}")
     if "log_file_path" not in configure_vm_template_values:
@@ -446,7 +465,8 @@ def run_configure_image():
         configure_vm_name,
         image_path,
         *configure_vm_template_values,
-        template_path=configure_vm_template,
+        template_path=configure_vm_template_path,
+        disk_driver_type=image_format,
         cpu_mode=configure_vm_cpu_model,
         num_vcpus=configure_vm_vcpus,
         memory_size=configure_vm_memory,

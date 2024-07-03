@@ -50,6 +50,8 @@ These configuration files includes::
     - vendor-data
     - network-config
 
+.. _help_output:
+
 Therefore, the ``configure-vm-image`` tool attempts to load each of these files when launched from the given parameter set paths for each of them.
 The parameter names for these can be discovered by running the command with the ``--help`` flag::
 
@@ -126,25 +128,23 @@ Basic Example
 
 In this example, we will configure an existing virtual machine image with a basic cloud-init configuration.
 This includes creating a ``default_user`` with sudo capabilities that can authenticate via the console with a password.
-The user will have a password that is hashed and stored in the user-data file.
+An example of such configuration can be found in the ``examples/basic-cloud-init`` directory of this package.
+To use this, we can create a symlink of it in the root directory of the repo::
 
-An example of this can be found in the ``examples/basic-cloud-init`` directory of this package.
-But, before we can begin we need to have a virtual machine image that we want to configure.
-This can be created via the `gen-vm-image <https://github.com/ucphhpc/gen-vm-image>`_ tool or by downloading an existing image from the internet as highlighted
-in the cloud_init_images_ section.
+    ln -s examples/basic-cloud-init cloud-init
 
+Subsequently, you can adjust the configuration files to your liking and in accordance with the `cloud-init <https://cloudinit.readthedocs.io/en/latest/index.html>`_ documentation.
+
+After this has been prepared, 
 But, before we can begin, we need to install the dependencies for the tool::
     
     ./dep/<distro>/install-dep.sh
 
-
-After the dependencies have been installed, we can proceed with configuring the image by setting up the cloud-init configuration files.
-To utilize the default expected path of the cloud-init configuration files, we can create a symlink in the
-root directory of the package to the cloud-init directory in the example directory::
-
-    ln -s examples/basic-cloud-init/cloud-init cloud-init
-
-With the symlink path in place, we can now configure the image by running the following command::
+With this in place, we can now configure the image by running the following command::
 
     configure-vm-image <path_to_image>
 
+This will both generate a cloud-init ISO image and launch a virtual machine that mounts said ISO and the disk image to be configured.
+Upon launch, the output of the configuring VM will be logged to the log file specified with the ``--configure-vm-log-path`` parameter,
+which default can be seen in the ``help`` output above in help_output_. Additional output from the ``configure-vm-image`` tool can also be produced with the ``--verbose`` flag
+as also highlighted in the help output.

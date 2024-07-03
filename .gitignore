@@ -164,3 +164,8 @@ image-config/
 
 # Ignore the generated vm images
 configure-images/
+*.iso
+*.qcow2
+*.raw
+# Ignore the generated log files
+*.log*
