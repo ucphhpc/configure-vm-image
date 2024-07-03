@@ -112,7 +112,7 @@ This means that the tool can be used to configure an image with only a subset of
 Cloud-init images
 -----------------
 
-Most distributions have a publically available cloud-init image that can be downloaded. A subset highlight of these can be found below::
+Most distributions have a publically available cloud-init image that can be downloaded. A subset highlight of these can be found below.
 
 - `Rocky <https://download.rockylinux.org/pub/rocky/>`_
 - `Debian <https://cloud.debian.org/images/cloud/>`_
