@@ -15,17 +15,16 @@ def makedirs(path):
 def load(path, mode="r", readlines=False, handler=None, opener=None, **load_kwargs):
     if not opener:
         opener = open
-
     try:
         with opener(path, mode) as fh:
             if handler:
-                return handler.load(fh, **load_kwargs)
+                return True, handler.load(fh, **load_kwargs)
             if readlines:
-                return fh.readlines()
-            return fh.read()
+                return True, fh.readlines()
+            return True, fh.read()
     except Exception as err:
-        print("Failed to load file: {} - {}".format(path, err))
-    return False
+        return False, "Failed to load file: {} - {}".format(path, err)
+    return False, "Failed to load file: {}".format(path)
 
 
 def load_json(path, opener=None):

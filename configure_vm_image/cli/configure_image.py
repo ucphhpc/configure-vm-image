@@ -1,6 +1,11 @@
 import argparse
 import os
-from configure_vm_image.common.defaults import CLOUD_INIT_DIR, PACKAGE_NAME, TMP_DIR, RES_DIR
+from configure_vm_image.common.defaults import (
+    CLOUD_INIT_DIR,
+    PACKAGE_NAME,
+    TMP_DIR,
+    RES_DIR,
+)
 from configure_vm_image.common.errors import (
     PATH_CREATE_ERROR,
     PATH_CREATE_ERROR_MSG,
@@ -185,18 +190,11 @@ def finished_configure(log_file_path):
 
     finished = False
     while not finished:
-        content = load(log_file_path, readlines=True)
-        if isinstance(content, str):
-            if first_marker in content and second_marker in content:
-                finished = True
-        if isinstance(content, (list, set, tuple)):
+        loaded, content = load(log_file_path, readlines=True)
+        if loaded:
             for line in content:
                 if first_marker in line and second_marker in line:
                     finished = True
-        if isinstance(content, bytes):
-            content = content.decode("utf-8", errors="ignore")
-            if first_marker in content and second_marker in content:
-                finished = True
     return finished
 
 
@@ -247,7 +245,7 @@ def run_configure_image():
     )
     parser.add_argument(
         "--configure_vm_template-path",
-        default=os.path.join(RES_DIR, "configure-vm-template.xml.j2")
+        default=os.path.join(RES_DIR, "configure-vm-template.xml.j2"),
     )
     parser.add_argument(
         "--config-user-data-path",
@@ -336,7 +334,9 @@ def run_configure_image():
 
     image_path = os.path.realpath(os.path.expanduser(args.image_path))
     image_format = args.image_format
-    configure_vm_template_path = os.path.realpath(os.path.expanduser(args.configure_vm_template_path))
+    configure_vm_template_path = os.path.realpath(
+        os.path.expanduser(args.configure_vm_template_path)
+    )
     user_data_path = os.path.realpath(os.path.expanduser(args.config_user_data_path))
     meta_data_path = os.path.realpath(os.path.expanduser(args.config_meta_data_path))
     vendor_data_path = os.path.realpath(
@@ -369,7 +369,11 @@ def run_configure_image():
     if not image_format:
         image_format = os.path.splitext(image_path)[1].replace(".", "")
         if verbose:
-            print("Automatically discovered image format: {} to configure the disk image".format(image_format))
+            print(
+                "Automatically discovered image format: {} to configure the disk image".format(
+                    image_format
+                )
+            )
 
     # Ensure that the required output directories exists
     cidata_iso_dir = os.path.dirname(cloud_init_iso_output_path)
@@ -441,14 +445,17 @@ def run_configure_image():
             print(PATH_CREATE_ERROR_MSG.format(os.path.dirname(log_file_path), msg))
             exit(PATH_CREATE_ERROR)
 
-    incrementer = 1
+    incrementer = 0
     while exists(log_file_path):
-        if incrementer == 1:
+        if incrementer == 0:
             if verbose:
                 print(
                     f"The configuring log file: {log_file_path} already exists, increasing the designated file name"
                 )
-        log_file_path = f"{log_file_path}.%s" % incrementer
+            log_file_path = f"{log_file_path}.%s" % incrementer
+        else:
+            file_increment = os.path.splitext(log_file_path)[1]
+            log_file_path = log_file_path.replace(file_increment, f".{incrementer + 1}")
         incrementer += 1
     if verbose:
         print(f"Generated new log file path: {log_file_path}")
