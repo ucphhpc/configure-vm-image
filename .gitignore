@@ -173,3 +173,4 @@ configure-images/
 
 # Ignore the cloud-init directory
 cloud-init/
+cloud-init
