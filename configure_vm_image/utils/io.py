@@ -32,10 +32,10 @@ def load_json(path, opener=None):
         opener = open
     try:
         with opener(path, "r") as fh:
-            return json.load(fh)
+            return True, json.load(fh)
     except IOError as err:
-        print("Failed to load json: {} - {}".format(path, err))
-    return False
+        return False, "Failed to load json: {} - {}".format(path, err)
+    return False, "Failed to load json: {}".format(path)
 
 
 def write(path, content, mode="w", mkdirs=False, handler=None, **handler_kwargs):
@@ -53,10 +53,10 @@ def write(path, content, mode="w", mkdirs=False, handler=None, **handler_kwargs)
                         fh.write(line)
                 else:
                     fh.write(content)
-        return True
+        return True, "Saved file: {}".format(path)
     except Exception as err:
-        print("Failed to save file: {} - {}".format(path, err))
-    return False
+        return False, "Failed to save file: {} - {}".format(path, err)
+    return False, "Failed to save file: {}".format(path)
 
 
 def remove(path):
