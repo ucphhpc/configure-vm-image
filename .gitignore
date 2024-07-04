@@ -167,5 +167,9 @@ configure-images/
 *.iso
 *.qcow2
 *.raw
+
 # Ignore the generated log files
 *.log*
+
+# Ignore the cloud-init directory
+cloud-init/
