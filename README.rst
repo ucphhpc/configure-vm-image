@@ -148,3 +148,50 @@ This will both generate a cloud-init ISO image and launch a virtual machine that
 Upon launch, the output of the configuring VM will be logged to the log file specified with the ``--configure-vm-log-path`` parameter,
 which default can be seen in the ``help`` output above in help_output_. Additional output from the ``configure-vm-image`` tool can also be produced with the ``--verbose`` flag
 as also highlighted in the help output.
+
+
+------------------------
+Additional Disks Example
+------------------------
+
+Beyond the simple example, where a single disk image is configured, ``configure-vm-image`` can also be used to partition and format additional disks beyond the primary vm image disk.
+This can be achived by using the ``cloud-init`` feature of `disk_setup <https://cloudinit.readthedocs.io/en/latest/reference/modules.html#disk-setup>`_ and `fs_setup <https://cloudinit.readthedocs.io/en/latest/reference/modules.html#disk-setup>`_.
+An example of such a cloud-init configuration can be found in the ``examples/disk-setup-cloud-init`` directory of this package.
+In the example, three additional disks are expected to be present in the VM at the specified device paths, namely:
+
+    - /dev/vdb
+    - /dev/vdc
+    - /dev/vdd
+
+To ensure this, the VM template file (as specified with ``--configure-vm-template``) should be adjusted to include these disks::
+
+    <devices>
+    ...
+    <disk type='file' device='disk'>
+        <driver name='qemu' type='raw'/>
+        <source file='{{disk2_path}}'/>
+        <target dev='vdb' bus='virtio'/>
+    </disk>
+    <disk type='file' device='disk'>
+        <driver name='qemu' type='raw'/>
+        <source file='{{disk3_path}}'/>
+        <target dev='vdc' bus='virtio'/>
+    </disk>
+    <disk type='file' device='disk'>
+        <driver name='qemu' type='raw'/>
+        <source file='{{disk4_path}}'/>
+        <target dev='vdd' bus='virtio'/>
+    </disk>
+    ...
+    </devices>
+
+Here it is important to match the target device names with the device paths specified in the cloud-init configuration file.
+After this has been prepared, the cloud-init configuration files can be symlinked to the root directory of the repo::
+
+    ln -s examples/disk-setup-cloud-init cloud-init
+
+Once this is complete, the ``configure-vm-image`` tool can be run with the nessesary template values that specify the paths to the additional disk images::
+
+    configure-vm-image <path_to_image> --configure-vm-template-values disk2_path=<path_to_disk2> disk3_path=<path_to_disk3> disk4_path=<path_to_disk4>
+
+This will configure the image with the additional disks as specified in the cloud-init configuration file.
