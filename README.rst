@@ -109,6 +109,7 @@ If any of these configuration files are not present, the tool will skip that par
 This means that the tool can be used to configure an image with only a subset of the configuration files or none at all.
 
 .. _cloud_init_images:
+
 -----------------
 Cloud-init Images
 -----------------
