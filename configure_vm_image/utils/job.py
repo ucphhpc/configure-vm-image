@@ -55,12 +55,12 @@ def to_json(content):
 
 def run_popen(cmd, output_format="str", **run_kwargs):
     result = __extract_results__(subprocess.Popen(cmd, **run_kwargs))
-    return __format_output__(result, format_=output_format)
+    return __format_output__(result, to_format=output_format)
 
 
 def check_call(cmd, output_format="str", **run_kwargs):
     result = __extract_results__(subprocess.check_call(cmd, **run_kwargs))
-    return __format_output__(result, format_=output_format)
+    return __format_output__(result, to_format=output_format)
 
 
 def run(cmd, output_format="str", **run_kwargs):
@@ -75,12 +75,12 @@ def run(cmd, output_format="str", **run_kwargs):
 
     result = __extract_results__(raw_results)
     if result["error"]:
-        formatted_error = __format_output__(result["error"], format_=output_format)
+        formatted_error = __format_output__(result["error"], to_format=output_format)
         if formatted_error:
             return_values["error"] = formatted_error
 
     if result["output"]:
-        formatted_output = __format_output__(result["output"], format_=output_format)
+        formatted_output = __format_output__(result["output"], to_format=output_format)
         if formatted_output:
             return_values["output"] = formatted_output
 
