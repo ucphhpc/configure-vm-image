@@ -244,10 +244,6 @@ def run_configure_image():
         help="The format of the image that is to be configured. The tool tries to automatically discover this if not set.",
     )
     parser.add_argument(
-        "--configure_vm_template-path",
-        default=os.path.join(RES_DIR, "configure-vm-template.xml.j2"),
-    )
-    parser.add_argument(
         "--config-user-data-path",
         default=os.path.join(CLOUD_INIT_DIR, "user-data"),
         help="The path to the cloud-init user-data configuration file.",
@@ -307,6 +303,11 @@ def run_configure_image():
         "-cv-log",
         default=os.path.join(TMP_DIR, "configure-vm.log"),
         help="""The path to the log file that is used to log the output of the configuring VM.""",
+    )
+    parser.add_argument(
+        "--configure-vm-template-path",
+        default=os.path.join(RES_DIR, "configure-vm-template.xml.j2"),
+        help="""The path to the template file that is used to configure the VM.""",
     )
     parser.add_argument(
         "--configure-vm-template-values",
