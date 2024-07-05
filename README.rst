@@ -54,27 +54,31 @@ Therefore, the ``configure-vm-image`` tool attempts to load each of these files 
 The parameter names for these can be discovered by running the command with the ``--help`` flag::
 
     usage: configure_image.py [-h]
-                            [--config-user-data-path CONFIG_USER_DATA_PATH]
-                            [--config-meta-data-path CONFIG_META_DATA_PATH]
-                            [--config-vendor-data-path CONFIG_VENDOR_DATA_PATH]
-                            [--config-network-config-path CONFIG_NETWORK_CONFIG_PATH]
-                            [--cloud-init-iso-output-path CLOUD_INIT_ISO_OUTPUT_PATH]
-                            [--configure-vm-log-path CONFIGURE_VM_LOG_PATH]
-                            [--configure-vm-name CONFIGURE_VM_NAME]
-                            [--configure-vm-template CONFIGURE_VM_TEMPLATE]
-                            [--configure-vm-template-values KEY=VALUE [KEY=VALUE ...]]
-                            [--configure-vm-cpu-model CONFIGURE_VM_CPU_MODEL]
-                            [--configure-vm-vcpus CONFIGURE_VM_VCPUS]
-                            [--configure-vm-memory CONFIGURE_VM_MEMORY]
-                            [--reset-operations RESET_OPERATIONS]
-                            [--verbose]
-                            image_path
+                              [--image-format IMAGE_FORMAT]
+                              [--config-user-data-path CONFIG_USER_DATA_PATH]
+                              [--config-meta-data-path CONFIG_META_DATA_PATH]
+                              [--config-vendor-data-path CONFIG_VENDOR_DATA_PATH]
+                              [--config-network-config-path CONFIG_NETWORK_CONFIG_PATH]
+                              [--configure-vm-name CONFIGURE_VM_NAME]
+                              [--configure-vm-cpu-model CONFIGURE_VM_CPU_MODEL]
+                              [--configure-vm-vcpus CONFIGURE_VM_VCPUS]
+                              [--configure-vm-memory CONFIGURE_VM_MEMORY]
+                              [--cloud-init-iso-output-path CLOUD_INIT_ISO_OUTPUT_PATH]
+                              [--configure-vm-log-path CONFIGURE_VM_LOG_PATH]
+                              [--configure-vm-template-path CONFIGURE_VM_TEMPLATE_PATH]
+                              [--configure-vm-template-values KEY=VALUE [KEY=VALUE ...]]
+                              [--reset-operations RESET_OPERATIONS]
+                              [--verbose]
+                              image_path
 
     positional arguments:
     image_path            The path to the image that is to be configured.
 
     options:
     -h, --help            show this help message and exit
+    --image-format IMAGE_FORMAT
+                            The format of the image that is to be configured. 
+                            The tool tries to automatically discover this if not set. (default: None)
     --config-user-data-path CONFIG_USER_DATA_PATH
                             The path to the cloud-init user-data configuration file. (default: cloud-init/user-data)
     --config-meta-data-path CONFIG_META_DATA_PATH
@@ -82,24 +86,27 @@ The parameter names for these can be discovered by running the command with the 
     --config-vendor-data-path CONFIG_VENDOR_DATA_PATH
                             The path to the cloud-init vendor-data configuration file. (default: cloud-init/vendor-data)
     --config-network-config-path CONFIG_NETWORK_CONFIG_PATH
-                            The path to the cloud-init network-config configuration file that is used to configure the network settings of the image. (default: cloud-init/network-config)
-    --cloud-init-iso-output-path CLOUD_INIT_ISO_OUTPUT_PATH, -ci-output CLOUD_INIT_ISO_OUTPUT_PATH
-                            The path to the cloud-init output iso image file that is generated based on the data defined in the user-data, meta-data, vendor-data, and network-config files. This seed iso file is then subsequently used to
-                            configure the defined input image. (default: cloud-init/cidata.iso)
-    --configure-vm-log-path CONFIGURE_VM_LOG_PATH, -cv-log CONFIGURE_VM_LOG_PATH
-                            The path to the log file that is used to log the output of the configuring VM. (default: tmp/configure-vm.log)
+                            The path to the cloud-init network-config configuration file that is used to configure the network settings of the image.
+                            (default: cloud-init/network-config)
     --configure-vm-name CONFIGURE_VM_NAME, -n CONFIGURE_VM_NAME
                             The name of the VM that is used to configure the image. (default: configure-vm-image)
-    --configure-vm-template CONFIGURE_VM_TEMPLATE, -t CONFIGURE_VM_TEMPLATE
-                            The path to the template file that specifies how the configuring VM should be launched. (default: None)
-    --configure-vm-template-values KEY=VALUE [KEY=VALUE ...], -tv KEY=VALUE [KEY=VALUE ...]
-                            A set of key=value pair arguments that should be passed to the --configure-vm-template. If a value contains spaces, you should define it with quotes. (default: [])
     --configure-vm-cpu-model CONFIGURE_VM_CPU_MODEL, -cv-cpu CONFIGURE_VM_CPU_MODEL
                             The cpu model to use for virtualization when configuring the image. (default: None)
     --configure-vm-vcpus CONFIGURE_VM_VCPUS, -cv-vcpus CONFIGURE_VM_VCPUS
                             The number of virtual CPUs to allocate to the VM when configuring the image. (default: 1)
     --configure-vm-memory CONFIGURE_VM_MEMORY, -cv-m CONFIGURE_VM_MEMORY
                             The amount of memory to allocate to the VM when configuring the image. (default: 2048MiB)
+    --cloud-init-iso-output-path CLOUD_INIT_ISO_OUTPUT_PATH, -ci-output CLOUD_INIT_ISO_OUTPUT_PATH
+                            The path to the cloud-init output ISO image file that is generated based 
+                            on the data defined in the user-data, meta-data, vendor-data, and network-config files.
+                            This seed ISO is then subsequently used to configure the defined input image. (default: cloud-init/cidata.iso)
+    --configure-vm-log-path CONFIGURE_VM_LOG_PATH, -cv-log CONFIGURE_VM_LOG_PATH
+                            The path to the log file that is used to log the output of the configuring VM. (default: tmp/configure-vm.log)
+    --configure-vm-template-path CONFIGURE_VM_TEMPLATE_PATH
+                            The path to the template file that is used to configure the VM. (default: res/configure-vm-template.xml.j2)
+    --configure-vm-template-values KEY=VALUE [KEY=VALUE ...], -tv KEY=VALUE [KEY=VALUE ...]
+                            An additional set of key=value pair arguments that should be passed to the --configure-vm-template.
+                            If a value contains spaces, you should define it with quotes. (default: [])
     --reset-operations RESET_OPERATIONS
                             The operations to perform during the reset operation. (default: defaults,-ssh-userdir)
     --verbose, -v         Flag to enable verbose output (default: False)
