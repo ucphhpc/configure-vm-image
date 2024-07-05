@@ -23,7 +23,7 @@ Install
 
 The tool itself can be installed either via pip::
 
-    pip install `configure-vm-image <https://pypi.org/project/configure-vm-image/>`_
+    pip install configure-vm-image
 
 or by cloning the repository and running the following command in the root directory::
 
