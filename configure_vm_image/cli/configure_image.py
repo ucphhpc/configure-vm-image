@@ -151,11 +151,13 @@ def configure_vm(name, image, *template_args, **kwargs):
     if not create_success:
         return False, create_result["error"]
 
+    if "instance" not in create_result["output"]:
+        return False, create_result["error"]
+
     if "id" not in create_result["output"]["instance"]:
         return False, create_result["output"]
 
     instance_id = create_result["output"]["instance"]["id"]
-
     start_command = [
         vm_orchestrator,
         "instance",
