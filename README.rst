@@ -14,9 +14,7 @@ The following dependencies are required to be installed on the system to use the
     - `genisoimage <https://linux.die.net/man/1/genisoimage>`_
     - `virt-sysprep <https://linux.die.net/man/1/virt-sysprep>`_
 
-How to install each of these for a given distribution can be found
-`here <https://pkgs.org/search/?q=genisoimage>`_ and `here <https://pkgs.org/search/?q=guestfs-tools>`_.
-
+How to install each of these for a given distribution can be found at `pkgs.org <https://pkgs.org/>`_.
 Dependency install scripts for various distributions can be found in the ``dep`` root directory of this package.
 
 -------
