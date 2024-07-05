@@ -12,8 +12,8 @@ def __to_str__(o):
         return o.decode("utf-8")
 
 
-def __format_output__(output, format_="str"):
-    if format_ == "str":
+def __format_output__(output, to_format="str"):
+    if to_format == "str":
         if isinstance(output, bytes):
             return output.decode("utf-8")
         if isinstance(output, list):
@@ -22,15 +22,12 @@ def __format_output__(output, format_="str"):
             formatted_output = {}
             for key, value in output.items():
                 formatted_output[key] = str(value)
-            return formatted_output
+            return json.dumps(formatted_output)
         if isinstance(output, str):
             return output
-    if format_ == "json":
-        try:
-            return to_json(output)
-        except Exception as e:
-            print(f"Failed to convert output: {output} to json: {e}")
-        return None
+    if to_format == "json":
+        return to_json(output)
+    return False
 
 
 def __extract_results__(result):
@@ -78,13 +75,14 @@ def run(cmd, output_format="str", **run_kwargs):
 
     result = __extract_results__(raw_results)
     if result["error"]:
-        return_values["error"] = __format_output__(
-            result["error"], format_=output_format
-        )
+        formatted_error = __format_output__(result["error"], format_=output_format)
+        if formatted_error:
+            return_values["error"] = formatted_error
+
     if result["output"]:
-        return_values["output"] = __format_output__(
-            result["output"], format_=output_format
-        )
+        formatted_output = __format_output__(result["output"], format_=output_format)
+        if formatted_output:
+            return_values["output"] = formatted_output
 
     if result["returncode"] != 0:
         return False, return_values
