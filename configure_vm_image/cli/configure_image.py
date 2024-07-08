@@ -151,11 +151,17 @@ def configure_vm(name, image, *template_args, **kwargs):
     if not create_success:
         return False, create_result["error"]
 
+    if not isinstance(create_result, dict):
+        return False, create_result
+
     if "instance" not in create_result["output"]:
         return False, create_result["error"]
 
-    if "id" not in create_result["output"]["instance"]:
+    if not isinstance(create_result["output"]["instance"], dict):
         return False, create_result["output"]
+
+    if "id" not in create_result["output"]["instance"]:
+        return False, create_result["output"]["instance"]
 
     instance_id = create_result["output"]["instance"]["id"]
     start_command = [
