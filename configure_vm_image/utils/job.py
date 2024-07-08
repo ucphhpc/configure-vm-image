@@ -29,7 +29,7 @@ def __format_output__(output, to_format="str"):
         if is_json_string(output):
             return to_json(output)
         else:
-            return f"Failed to convert output to json: {output}"
+            raise ValueError(f"Failed to convert output to json: {output}")
     return False
 
 
@@ -57,7 +57,6 @@ def is_json_string(content):
         json.loads(content)
         return True
     except json.JSONDecodeError:
-        print(content)
         return False
     return False
 

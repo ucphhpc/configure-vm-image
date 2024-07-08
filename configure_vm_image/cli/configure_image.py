@@ -154,8 +154,17 @@ def configure_vm(name, image, *template_args, **kwargs):
     if not isinstance(create_result, dict):
         return False, create_result
 
-    if "instance" not in create_result["output"]:
+    if "error" in create_result and create_result["error"]:
         return False, create_result["error"]
+
+    if "output" in create_result and not create_result["output"]:
+        return False, create_result["output"]
+
+    if not isinstance(create_result["output"], dict):
+        return False, create_result["output"]
+
+    if "instance" not in create_result["output"]:
+        return False, create_result["output"]
 
     if not isinstance(create_result["output"]["instance"], dict):
         return False, create_result["output"]
@@ -182,7 +191,6 @@ def configure_image(name, image, *template_args, **configure_kwargs):
         name, image, *template_args, **configure_kwargs
     )
     if not configure_result:
-        print("Failed to configure the image: {}".format(name))
         return False, configure_msg
     return configure_result, configure_msg
 
