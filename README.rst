@@ -9,6 +9,11 @@ Virtual machine images can be either downloaded straight from a distribution pro
 Dependencies
 ------------
 
+.. image:: https://img.shields.io/pypi/pyversions/configure-vm-image.svg
+    :target: https://img.shields.io/pypi/pyversions/configure-vm-image
+.. image:: https://badge.fury.io/py/configure-vm-image.svg
+    :target: https://badge.fury.io/py/configure-vm-image
+
 The following dependencies are required to be installed on the system to use the ``configure-vm-image`` command:
 
     - `genisoimage <https://linux.die.net/man/1/genisoimage>`_
