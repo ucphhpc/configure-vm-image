@@ -2,17 +2,17 @@
 configure-vm-image
 ==================
 
+.. image:: https://img.shields.io/pypi/pyversions/configure-vm-image.svg
+    :target: https://img.shields.io/pypi/pyversions/configure-vm-image
+.. image:: https://badge.fury.io/py/configure-vm-image.svg
+    :target: https://badge.fury.io/py/configure-vm-image
+
 This package can be used for configuring existing virtual machine images.
 Virtual machine images can be either downloaded straight from a distribution provider (see cloud_init_images_) or generated via tools such as the `gen-vm-image <https://github.com/ucphhpc/gen-vm-image>`_.
 
 ------------
 Dependencies
 ------------
-
-.. image:: https://img.shields.io/pypi/pyversions/configure-vm-image.svg
-    :target: https://img.shields.io/pypi/pyversions/configure-vm-image
-.. image:: https://badge.fury.io/py/configure-vm-image.svg
-    :target: https://badge.fury.io/py/configure-vm-image
 
 The following dependencies are required to be installed on the system to use the ``configure-vm-image`` command:
 
