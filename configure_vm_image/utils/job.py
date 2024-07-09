@@ -26,7 +26,10 @@ def __format_output__(output, to_format="str"):
         if isinstance(output, str):
             return output
     if to_format == "json":
-        return to_json(output)
+        if is_json_string(output):
+            return to_json(output)
+        else:
+            raise ValueError(f"Failed to convert output to json: {output}")
     return False
 
 
@@ -47,6 +50,15 @@ def __extract_results__(result):
     if hasattr(result, "kill"):
         command_results.update({"kill": getattr(result, "kill")})
     return command_results
+
+
+def is_json_string(content):
+    try:
+        json.loads(content)
+        return True
+    except json.JSONDecodeError:
+        return False
+    return False
 
 
 def to_json(content):
