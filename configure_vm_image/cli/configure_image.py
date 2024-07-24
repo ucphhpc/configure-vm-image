@@ -247,7 +247,7 @@ def wait_for_vm_removed(name, attempts=30):
     return False, msg
 
 
-def reset_image(image, reset_operations=None):
+def reset_image(image, reset_operations=None, verbose=False):
     """Resets the image such that it is ready to be started
     in production"""
     # Ensure that the virt-sysprep doesn't try to use libvirt
@@ -256,6 +256,8 @@ def reset_image(image, reset_operations=None):
     reset_command = ["virt-sysprep", "-a", image]
     if reset_operations:
         reset_command.extend(["--operations", reset_operations])
+    if verbose:
+        reset_command.append("--verbose")
     success, result = run(reset_command)
     if not success:
         return False, result["error"]
@@ -551,7 +553,7 @@ def run_configure_image():
         print(f"Removed the VM: {configured_id} after configuration: {removed_msg}")
 
     reset_success, reset_results = reset_image(
-        image_path, reset_operations=reset_operations
+        image_path, reset_operations=reset_operations, verbose=verbose
     )
     if verbose:
         print(reset_results)
