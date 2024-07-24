@@ -232,6 +232,23 @@ def vm_action(action, name, *args, **kwargs):
     return True, result["output"]
 
 
+def wait_for_vm_shutdown(name, attempts=30):
+    """Waits for the VM to be shutdown"""
+    attempt = 0
+    while attempt < attempts:
+        found, result = vm_action("show", name)
+        if found:
+            instance = result.get("instance", {})
+            state = instance.get("state", "")
+            if state == "shut off":
+                return True, f"VM: {name} was successfully shutdown"
+        else:
+            return True, f"VM: {name} was is already removed"
+        time.sleep(1)
+        attempt += 1
+    return False, f"Failed to wait for the shutdown of VM: {name}"
+
+
 def wait_for_vm_removed(name, attempts=30):
     """Waits for the VM to be removed"""
     attempt = 0
@@ -533,6 +550,13 @@ def run_configure_image():
     if not shutdown:
         print(
             f"Failed to shutdown the VM: {configured_id} after configuration: {shutdown_msg}"
+        )
+        return CONFIGURE_IMAGE_ERROR
+
+    shutdowned, shutdowned_msg = wait_for_vm_shutdown(configured_id)
+    if not shutdowned:
+        print(
+            f"Failed to wait for the shutdown of VM: {configured_id} after configuration: {shutdowned_msg}"
         )
         return CONFIGURE_IMAGE_ERROR
 
