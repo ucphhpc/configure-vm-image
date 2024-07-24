@@ -1,5 +1,6 @@
 import argparse
 import os
+import time
 from configure_vm_image.common.defaults import (
     CLOUD_INIT_DIR,
     PACKAGE_NAME,
@@ -228,6 +229,21 @@ def vm_action(action, name, *args, **kwargs):
     if not success:
         return False, result["error"]
     return True, result["output"]
+
+
+def wait_for_vm_removed(name, attempts=30):
+    """Waits for the VM to be removed"""
+    attempt = 0
+    result = {}
+    while attempt < attempts:
+        found, result = vm_action("show", name)
+        if not found:
+            return True, f"VM: {name} was sucessfully removed"
+        time.sleep(1)
+        attempt += 1
+    if "error" not in result:
+        result["error"] = f"The VM: {name} was not removed"
+    return False, result["error"]
 
 
 def reset_image(image, reset_operations=None):
@@ -517,12 +533,21 @@ def run_configure_image():
         )
         exit(CONFIGURE_IMAGE_ERROR)
 
-    removed, remove_msg = vm_action("remove", configured_id)
-    if not removed:
+    remove, remove_msg = vm_action("remove", configured_id)
+    if not remove:
         print(
             f"Failed to remove the VM: {configured_id} after configuration: {remove_msg}"
         )
         exit(CONFIGURE_IMAGE_ERROR)
+
+    removed, removed_msg = wait_for_vm_removed(configured_id)
+    if not removed:
+        print(
+            f"Failed to wait for the removal of VM: {configured_id} after the configuration was applied: {removed_msg}"
+        )
+        exit(CONFIGURE_IMAGE_ERROR)
+    if verbose:
+        print(f"Removed the VM: {configured_id} after configuration: {removed_msg}")
 
     reset_success, reset_results = reset_image(
         image_path, reset_operations=reset_operations
