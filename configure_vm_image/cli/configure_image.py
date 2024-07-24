@@ -243,7 +243,7 @@ def wait_for_vm_removed(name, attempts=30):
         attempt += 1
     if not msg:
         msg = f"Failed to wait for the removal of VM: {name}"
-    return False, result["error"]
+    return False, msg
 
 
 def reset_image(image, reset_operations=None):
