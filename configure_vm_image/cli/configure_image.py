@@ -1,6 +1,7 @@
 import argparse
 import os
 import time
+import sys
 from configure_vm_image.common.defaults import (
     CLOUD_INIT_DIR,
     PACKAGE_NAME,
@@ -397,7 +398,7 @@ def run_configure_image():
                 image_path, "could not find the image to configure"
             )
         )
-        exit(PATH_NOT_FOUND_ERROR)
+        return PATH_NOT_FOUND_ERROR
 
     if not image_format:
         image_format = os.path.splitext(image_path)[1].replace(".", "")
@@ -415,7 +416,7 @@ def run_configure_image():
             created, msg = makedirs(d)
             if not created:
                 print(PATH_CREATE_ERROR_MSG.format(d, msg))
-                exit(PATH_CREATE_ERROR)
+                return PATH_CREATE_ERROR
 
     if not exists(user_data_path):
         print(
@@ -470,13 +471,13 @@ def run_configure_image():
         print(generated_msg)
     if not generated_result:
         print(generated_msg)
-        exit(generated_result)
+        return generated_result
 
     if not exists(os.path.dirname(log_file_path)):
         created, msg = makedirs(os.path.dirname(log_file_path))
         if not created:
             print(PATH_CREATE_ERROR_MSG.format(os.path.dirname(log_file_path), msg))
-            exit(PATH_CREATE_ERROR)
+            return PATH_CREATE_ERROR
 
     incrementer = 0
     while exists(log_file_path):
@@ -515,14 +516,14 @@ def run_configure_image():
         print(configured_msg)
     if not configured_id:
         print(CONFIGURE_IMAGE_ERROR_MSG.format(image_path, "failed to configure image"))
-        exit(CONFIGURE_IMAGE_ERROR)
+        return CONFIGURE_IMAGE_ERROR
 
     if verbose:
         print("Waiting for the configuration process to finish")
     finished = finished_configure(log_file_path)
     if not finished:
         print("Failed to finish configuring the image")
-        exit(CONFIGURE_IMAGE_ERROR)
+        return CONFIGURE_IMAGE_ERROR
     if verbose:
         print(f"Finished configuring the image in the instance: {configured_id}")
 
@@ -531,21 +532,21 @@ def run_configure_image():
         print(
             f"Failed to shutdown the VM: {configured_id} after configuration: {shutdown_msg}"
         )
-        exit(CONFIGURE_IMAGE_ERROR)
+        return CONFIGURE_IMAGE_ERROR
 
     remove, remove_msg = vm_action("remove", configured_id)
     if not remove:
         print(
             f"Failed to remove the VM: {configured_id} after configuration: {remove_msg}"
         )
-        exit(CONFIGURE_IMAGE_ERROR)
+        return CONFIGURE_IMAGE_ERROR
 
     removed, removed_msg = wait_for_vm_removed(configured_id)
     if not removed:
         print(
             f"Failed to wait for the removal of VM: {configured_id} after the configuration was applied: {removed_msg}"
         )
-        exit(CONFIGURE_IMAGE_ERROR)
+        return CONFIGURE_IMAGE_ERROR
     if verbose:
         print(f"Removed the VM: {configured_id} after configuration: {removed_msg}")
 
@@ -556,8 +557,8 @@ def run_configure_image():
         print(reset_results)
     if not reset_success:
         print(RESET_IMAGE_ERROR_MSG.format(reset_results, "failed to reset image"))
-        exit(RESET_IMAGE_ERROR)
+        return RESET_IMAGE_ERROR
 
 
 if __name__ == "__main__":
-    run_configure_image()
+    sys.exit(run_configure_image())
