@@ -381,7 +381,14 @@ def run_configure_image():
         "-v",
         action="store_true",
         default=False,
-        help="Flag to enable verbose output",
+        help="Flag to enable verbose output.",
+    )
+    parser.add_argument(
+        "--verbose-reset",
+        "-vr",
+        action="store_true",
+        default=False,
+        help="Flag to enable verbose output during the reset.",
     )
     args = parser.parse_args()
 
@@ -409,6 +416,7 @@ def run_configure_image():
     configure_vm_template_values = args.configure_vm_template_values
     reset_operations = args.reset_operations
     verbose = args.verbose
+    verbose_reset = args.verbose_reset
 
     # Ensure that the image to configure exists
     if not exists(image_path):
@@ -577,7 +585,7 @@ def run_configure_image():
         print(f"Removed the VM: {configured_id} after configuration: {removed_msg}")
 
     reset_success, reset_results = reset_image(
-        image_path, reset_operations=reset_operations, verbose=verbose
+        image_path, reset_operations=reset_operations, verbose=verbose_reset
     )
     if verbose:
         print(reset_results)
