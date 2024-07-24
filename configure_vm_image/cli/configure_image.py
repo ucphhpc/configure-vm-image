@@ -234,15 +234,15 @@ def vm_action(action, name, *args, **kwargs):
 def wait_for_vm_removed(name, attempts=30):
     """Waits for the VM to be removed"""
     attempt = 0
-    result = {}
+    msg = ""
     while attempt < attempts:
-        found, result = vm_action("show", name)
+        found, msg = vm_action("show", name)
         if not found:
             return True, f"VM: {name} was sucessfully removed"
         time.sleep(1)
         attempt += 1
-    if "error" not in result:
-        result["error"] = f"The VM: {name} was not removed"
+    if not msg:
+        msg = f"Failed to wait for the removal of VM: {name}"
     return False, result["error"]
 
 
