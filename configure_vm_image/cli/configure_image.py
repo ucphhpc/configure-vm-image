@@ -2,6 +2,7 @@ import argparse
 import os
 import time
 import sys
+from configure_vm_image._version import __version__
 from configure_vm_image.common.defaults import (
     CLOUD_INIT_DIR,
     PACKAGE_NAME,
@@ -389,6 +390,13 @@ def run_configure_image():
         action="store_true",
         default=False,
         help="Flag to enable verbose output during the reset.",
+    )
+    parser.add_argument(
+        "--version",
+        "-V",
+        action="version",
+        version=__version__,
+        help="Print the version of the program",
     )
     args = parser.parse_args()
 
