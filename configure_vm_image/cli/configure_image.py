@@ -282,11 +282,7 @@ def reset_image(image, reset_operations=None, verbose=False):
     return True, result["output"]
 
 
-def run_configure_image():
-    parser = argparse.ArgumentParser(
-        prog=SCRIPT_NAME,
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
+def add_build_image_cli_arguments(parser):
     parser.add_argument(
         "image_path",
         help="The path to the image that is to be configured.",
@@ -398,7 +394,23 @@ def run_configure_image():
         version=__version__,
         help="Print the version of the program",
     )
-    args = parser.parse_args()
+
+
+def corc_cli(commands):
+    parser = commands.add_parser(
+        "configure-image",
+        help="Build the images defined in an architecture file.",
+    )
+    add_build_image_cli_arguments(parser)
+
+
+def main(args):
+    parser = argparse.ArgumentParser(
+        prog=SCRIPT_NAME,
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    add_build_image_cli_arguments(parser)
+    args = parser.parse_args(args)
 
     image_path = os.path.realpath(os.path.expanduser(args.image_path))
     image_format = args.image_format
@@ -602,5 +614,9 @@ def run_configure_image():
         return RESET_IMAGE_ERROR
 
 
+def cli():
+    return main(sys.argv[1:])
+
+
 if __name__ == "__main__":
-    sys.exit(run_configure_image())
+    sys.exit(main(sys.argv[1:]))

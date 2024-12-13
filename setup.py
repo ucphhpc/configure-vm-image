@@ -42,7 +42,10 @@ setup(
     entry_points={
         "console_scripts": [
             "configure-vm-image = configure_vm_image.cli.configure_image:run_configure_image",
-        ]
+        ],
+        "corc.plugins": ["configure_vm_image=configure_vm_image"],
+        "corc.plugins.initializer": ["configure_vm_image=configure_vm_image"],
+        "corc.plugins.cli": ["configure_vm_image=configure_vm_image.cli.configure_vm_image:corc_cli"],
     },
     classifiers=[
         "Intended Audience :: Developers",
