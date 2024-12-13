@@ -1,6 +1,6 @@
 import os
 import time
-from configure_vm_image.common.errors import (
+from configure_vm_image.common.codes import (
     PATH_CREATE_ERROR,
     PATH_CREATE_ERROR_MSG,
     PATH_NOT_FOUND_ERROR,
