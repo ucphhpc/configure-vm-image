@@ -45,7 +45,9 @@ setup(
         ],
         "corc.plugins": ["configure_vm_image=configure_vm_image"],
         "corc.plugins.initializer": ["configure_vm_image=configure_vm_image"],
-        "corc.plugins.cli": ["configure_vm_image=configure_vm_image.cli.configure_vm_image:corc_cli"],
+        "corc.plugins.cli": [
+            "configure_vm_image=configure_vm_image.cli.configure_vm:corc_cli"
+        ],
     },
     classifiers=[
         "Intended Audience :: Developers",
