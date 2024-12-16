@@ -56,22 +56,24 @@ def configure_vm_image(
     verbose=False,
     verbose_reset=False,
 ):
+    response = {}
+    verbose_outputs = []
+
     if not configure_vm_template_values:
         configure_vm_template_values = []
 
     # Ensure that the image to configure exists
     if not exists(image_path):
-        print(
-            PATH_NOT_FOUND_ERROR_MSG.format(
-                image_path, "could not find the image to configure"
-            )
+        response["msg"] = PATH_NOT_FOUND_ERROR_MSG.format(
+            image_path, "could not find the image to configure"
         )
-        return PATH_NOT_FOUND_ERROR
+        response["verbose_outputs"] = verbose_outputs
+        return PATH_NOT_FOUND_ERROR, response
 
     if not image_format:
         image_format = os.path.splitext(image_path)[1].replace(".", "")
         if verbose:
-            print(
+            verbose_outputs.append(
                 "Automatically discovered image format: {} to configure the disk image".format(
                     image_format
                 )
@@ -83,11 +85,12 @@ def configure_vm_image(
         if not exists(d):
             created = makedirs(d)
             if not created:
-                print(PATH_CREATE_ERROR_MSG.format(d))
-                return PATH_CREATE_ERROR
+                response["msg"] = PATH_CREATE_ERROR_MSG.format(d)
+                response["verbose_outputs"] = verbose_outputs
+                return PATH_CREATE_ERROR, response
 
     if not exists(user_data_path):
-        print(
+        verbose_outputs.append(
             PATH_NOT_FOUND_ERROR_MSG.format(
                 user_data_path,
                 "could not find the user-data configuration file, continuing without it",
@@ -96,7 +99,7 @@ def configure_vm_image(
         user_data_path = None
 
     if not exists(meta_data_path):
-        print(
+        verbose_outputs.append(
             PATH_NOT_FOUND_ERROR_MSG.format(
                 meta_data_path,
                 "could not find the meta-data configuration file, continuing without it",
@@ -105,7 +108,7 @@ def configure_vm_image(
         meta_data_path = None
 
     if not exists(vendor_data_path):
-        print(
+        verbose_outputs.append(
             PATH_NOT_FOUND_ERROR_MSG.format(
                 vendor_data_path,
                 "could not find the vendor-data configuration file, continuing without it",
@@ -114,7 +117,7 @@ def configure_vm_image(
         vendor_data_path = None
 
     if not exists(network_config_path):
-        print(
+        verbose_outputs.append(
             PATH_NOT_FOUND_ERROR_MSG.format(
                 network_config_path,
                 "could not find the network-config configuration file, continuing without it",
@@ -122,7 +125,7 @@ def configure_vm_image(
         )
         network_config_path = None
     if verbose:
-        print(
+        verbose_outputs.append(
             "Generating the cloud-init iso image at: {}".format(
                 cloud_init_iso_output_path
             )
@@ -136,26 +139,26 @@ def configure_vm_image(
         network_config_path=network_config_path,
     )
     if verbose:
-        print(generated_msg)
+        verbose_outputs.append(generated_msg)
     if not generated_result:
-        print(generated_msg)
-        return generated_result
+        response["msg"] = generated_msg
+        response["verbose_outputs"] = verbose_outputs
+        return generated_result, response
 
     if not exists(os.path.dirname(configure_vm_log_path)):
         created, msg = makedirs(os.path.dirname(configure_vm_log_path))
         if not created:
-            print(
-                PATH_CREATE_ERROR_MSG.format(
-                    os.path.dirname(configure_vm_log_path), msg
-                )
+            response["msg"] = PATH_CREATE_ERROR_MSG.format(
+                os.path.dirname(configure_vm_log_path), msg
             )
-            return PATH_CREATE_ERROR
+            response["verbose_outputs"] = verbose_outputs
+            return PATH_CREATE_ERROR, response
 
     incrementer = 0
     while exists(configure_vm_log_path):
         if incrementer == 0:
             if verbose:
-                print(
+                verbose_outputs.append(
                     f"The configuring log file: {configure_vm_log_path} already exists, increasing the designated file name"
                 )
             configure_vm_log_path = f"{configure_vm_log_path}.%s" % incrementer
@@ -166,8 +169,10 @@ def configure_vm_image(
             )
         incrementer += 1
     if verbose:
-        print(f"Generated new log file path: {configure_vm_log_path}")
-        print(f"Using the VM template description: {configure_vm_template_path}")
+        verbose_outputs.append(f"Generated new log file path: {configure_vm_log_path}")
+        verbose_outputs.append(
+            f"Using the VM template description: {configure_vm_template_path}"
+        )
 
     # Ensure that the required template values are set for the cloud-init iso image
     # and for the VM log file that is monitored to tell when the configuration process is finished
@@ -187,58 +192,73 @@ def configure_vm_image(
         memory_size=configure_vm_memory,
     )
     if verbose:
-        print(configured_msg)
+        verbose_outputs.append(configured_msg)
     if not configured_id:
-        print(CONFIGURE_IMAGE_ERROR_MSG.format(image_path, "failed to configure image"))
-        return CONFIGURE_IMAGE_ERROR
+        response["msg"] = CONFIGURE_IMAGE_ERROR_MSG.format(
+            image_path, "failed to configure image"
+        )
+        response["verbose_outputs"] = verbose_outputs
+        return CONFIGURE_IMAGE_ERROR, response
 
     if verbose:
-        print("Waiting for the configuration process to finish")
+        verbose_outputs.append("Waiting for the configuration process to finish")
     finished = finished_configure(configure_vm_log_path)
     if not finished:
-        print("Failed to finish configuring the image")
-        return CONFIGURE_IMAGE_ERROR
+        response["msg"] = "Failed to finish configuring the image"
+        response["verbose_outputs"] = verbose_outputs
+        return CONFIGURE_IMAGE_ERROR, response
     if verbose:
-        print(f"Finished configuring the image in the instance: {configured_id}")
+        verbose_outputs.append(
+            f"Finished configuring the image in the instance: {configured_id}"
+        )
 
     shutdown, shutdown_msg = vm_action("stop", configured_id)
     if not shutdown:
-        print(
+        response["msg"] = (
             f"Failed to shutdown the VM: {configured_id} after configuration: {shutdown_msg}"
         )
-        return CONFIGURE_IMAGE_ERROR
+        response["verbose_outputs"] = verbose_outputs
+        return CONFIGURE_IMAGE_ERROR, response
 
     shutdowned, shutdowned_msg = wait_for_vm_shutdown(configured_id)
     if not shutdowned:
-        print(
+        response["msg"] = (
             f"Failed to wait for the shutdown of VM: {configured_id} after configuration: {shutdowned_msg}"
         )
-        return CONFIGURE_IMAGE_ERROR
+        response["verbose_outputs"] = verbose_outputs
+        return CONFIGURE_IMAGE_ERROR, response
 
     remove, remove_msg = vm_action("remove", configured_id)
     if not remove:
-        print(
+        response["msg"] = (
             f"Failed to remove the VM: {configured_id} after configuration: {remove_msg}"
         )
-        return CONFIGURE_IMAGE_ERROR
+        response["verbose_outputs"] = verbose_outputs
+        return CONFIGURE_IMAGE_ERROR, response
 
     removed, removed_msg = wait_for_vm_removed(configured_id)
     if not removed:
-        print(
+        response["msg"] = (
             f"Failed to wait for the removal of VM: {configured_id} after the configuration was applied: {removed_msg}"
         )
-        return CONFIGURE_IMAGE_ERROR
+        response["verbose_outputs"] = verbose_outputs
+        return CONFIGURE_IMAGE_ERROR, response
     if verbose:
-        print(f"Removed the VM: {configured_id} after configuration: {removed_msg}")
+        verbose_outputs.append(
+            f"Removed the VM: {configured_id} after configuration: {removed_msg}"
+        )
 
     reset_success, reset_results = reset_image(
         image_path, reset_operations=reset_operations, verbose=verbose_reset
     )
     if verbose:
-        print(reset_results)
+        verbose_outputs.append(reset_results)
     if not reset_success:
-        print(RESET_IMAGE_ERROR_MSG.format(reset_results, "failed to reset image"))
-        return RESET_IMAGE_ERROR
+        response["msg"] = RESET_IMAGE_ERROR_MSG.format(
+            reset_results, "failed to reset image"
+        )
+        response["verbose_outputs"] = verbose_outputs
+        return RESET_IMAGE_ERROR, response
 
 
 def add_configure_vm_image_cli_arguments(parser):
