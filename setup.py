@@ -44,7 +44,7 @@ setup(
             "configure-vm-image = configure_vm_image.cli.configure_image:cli",
         ],
         "corc.plugins": ["configure_vm_image=configure_vm_image"],
-        "corc.plugins.initializer": ["configure_vm_image=configure_vm_image"],
+        "corc.plugins.configuerer": ["configure_vm_image=configure_vm_image"],
         "corc.plugins.cli": [
             "configure_vm_image=configure_vm_image.cli.configure_image:corc_cli"
         ],
