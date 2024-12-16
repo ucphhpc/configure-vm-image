@@ -4,7 +4,7 @@ import sys
 import json
 from configure_vm_image._version import __version__
 from configure_vm_image.configure import configure_vm_image
-from configure_vm_image.common.utils import to_str, error_print
+from configure_vm_image.common.utils import to_str, error_print, expand_path
 from configure_vm_image.common.defaults import (
     CLOUD_INIT_DIR,
     PACKAGE_NAME,
@@ -20,7 +20,7 @@ from configure_vm_image.common.codes import (
 SCRIPT_NAME = __file__
 
 
-def add_build_image_cli_arguments(parser):
+def add_configure_vm_image_cli_arguments(parser):
     parser.add_argument(
         "image_path",
         help="The path to the image that is to be configured.",
@@ -134,72 +134,39 @@ def add_build_image_cli_arguments(parser):
     )
 
 
-def corc_cli(commands):
-    parser = commands.add_parser(
-        "configure-image",
-        help="Build the images defined in an architecture file.",
-    )
-    add_build_image_cli_arguments(parser)
-
-
 def main(args):
     parser = argparse.ArgumentParser(
         prog=SCRIPT_NAME,
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    add_build_image_cli_arguments(parser)
+    add_configure_vm_image_cli_arguments(parser)
     args = parser.parse_args(args)
 
-    image_path = os.path.realpath(os.path.expanduser(args.image_path))
-    image_format = args.image_format
-    configure_vm_template_path = os.path.realpath(
-        os.path.expanduser(args.configure_vm_template_path)
-    )
-    user_data_path = os.path.realpath(os.path.expanduser(args.config_user_data_path))
-    meta_data_path = os.path.realpath(os.path.expanduser(args.config_meta_data_path))
-    vendor_data_path = os.path.realpath(
-        os.path.expanduser(args.config_vendor_data_path)
-    )
-    network_config_path = os.path.realpath(
-        os.path.expanduser(args.config_network_config_path)
-    )
-    configure_vm_name = args.configure_vm_name
-    configure_vm_vcpus = args.configure_vm_vcpus
-    configure_vm_cpu_model = args.configure_vm_cpu_model
-    configure_vm_memory = args.configure_vm_memory
-    cloud_init_iso_output_path = os.path.realpath(
-        os.path.expanduser(args.cloud_init_iso_output_path)
-    )
-    log_file_path = os.path.realpath(os.path.expanduser(args.configure_vm_log_path))
-    configure_vm_template_values = args.configure_vm_template_values
-    reset_operations = args.reset_operations
-    verbose = args.verbose
-    verbose_reset = args.verbose_reset
     return_code, result_dict = configure_vm_image(
-        image_path,
-        image_format,
-        configure_vm_template_path,
-        user_data_path,
-        meta_data_path,
-        vendor_data_path,
-        network_config_path,
-        configure_vm_name,
-        configure_vm_vcpus,
-        configure_vm_cpu_model,
-        configure_vm_memory,
-        cloud_init_iso_output_path,
-        log_file_path,
-        configure_vm_template_values,
-        reset_operations,
-        verbose,
-        verbose_reset,
+        expand_path(args.image_path),
+        image_format=args.image_format,
+        user_data_path=expand_path(args.config_user_data_path),
+        meta_data_path=expand_path(args.config_meta_data_path),
+        vendor_data_path=expand_path(args.config_vendor_data_path),
+        network_config_path=expand_path(args.config_network_config_path),
+        configure_vm_name=args.configure_vm_name,
+        configure_vm_cpu_model=args.configure_vm_cpu_model,
+        configure_vm_vcpus=args.configure_vm_vcpus,
+        configure_vm_memory=args.configure_vm_memory,
+        cloud_init_iso_output_path=expand_path(args.cloud_init_iso_output_path),
+        configure_vm_log_path=expand_path(args.configure_vm_log_path),
+        configure_vm_template_path=expand_path(args.configure_vm_template_path),
+        configure_vm_template_values=args.configure_vm_template_values,
+        reset_operations=args.reset_operations,
+        verbose=args.verbose,
+        verbose_reset=args.verbose_reset,
     )
     response = {}
     if return_code == SUCCESS:
         response["status"] = "success"
     else:
         response["status"] = "failed"
-    if verbose:
+    if args.verbose:
         response["outputs"] = result_dict.get("verbose_outputs", [])
     response["msg"] = result_dict.get("msg", "")
     response["return_code"] = return_code

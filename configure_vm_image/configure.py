@@ -1,5 +1,11 @@
 import os
 import time
+from configure_vm_image.common.defaults import (
+    RES_DIR,
+    TMP_DIR,
+    CLOUD_INIT_DIR,
+    PACKAGE_NAME,
+)
 from configure_vm_image.common.codes import (
     PATH_CREATE_ERROR,
     PATH_CREATE_ERROR_MSG,
@@ -187,10 +193,10 @@ def configure_image(name, image, *template_args, **configure_kwargs):
     return configure_result, configure_msg
 
 
-def finished_configure(log_file_path):
+def finished_configure(configure_vm_log_path):
     """Waits for the configuration process to finish"""
     # Wait for the configuration process to finish
-    if not exists(log_file_path):
+    if not exists(configure_vm_log_path):
         return False
 
     first_marker = "Cloud-init v"
@@ -198,7 +204,7 @@ def finished_configure(log_file_path):
 
     finished = False
     while not finished:
-        loaded, content = load(log_file_path, readlines=True)
+        loaded, content = load(configure_vm_log_path, readlines=True)
         if loaded:
             for line in content:
                 if first_marker in line and second_marker in line:
@@ -273,23 +279,26 @@ def reset_image(image, reset_operations=None, verbose=False):
 
 def configure_vm_image(
     image_path,
-    image_format,
-    configure_vm_template_path,
-    user_data_path,
-    meta_data_path,
-    vendor_data_path,
-    network_config_path,
-    configure_vm_name,
-    configure_vm_vcpus,
-    configure_vm_cpu_model,
-    configure_vm_memory,
-    cloud_init_iso_output_path,
-    log_file_path,
-    configure_vm_template_values,
-    reset_operations,
+    image_format=None,
+    user_data_path=os.path.join(CLOUD_INIT_DIR, "user-data"),
+    meta_data_path=os.path.join(CLOUD_INIT_DIR, "meta-data"),
+    vendor_data_path=os.path.join(CLOUD_INIT_DIR, "vendor-data"),
+    network_config_path=os.path.join(CLOUD_INIT_DIR, "network-config"),
+    configure_vm_name=PACKAGE_NAME,
+    configure_vm_cpu_model=None,
+    configure_vm_vcpus="1",
+    configure_vm_memory="2048MiB",
+    cloud_init_iso_output_path=os.path.join(CLOUD_INIT_DIR, "cidata.iso"),
+    configure_vm_log_path=os.path.join(TMP_DIR, "configure-vm.log"),
+    configure_vm_template_path=os.path.join(RES_DIR, "configure-vm-template.xml.j2"),
+    configure_vm_template_values=None,
+    reset_operations="defaults,-ssh-userdir",
     verbose=False,
     verbose_reset=False,
 ):
+    if not configure_vm_template_values:
+        configure_vm_template_values = []
+
     # Ensure that the image to configure exists
     if not exists(image_path):
         print(
@@ -372,34 +381,40 @@ def configure_vm_image(
         print(generated_msg)
         return generated_result
 
-    if not exists(os.path.dirname(log_file_path)):
-        created, msg = makedirs(os.path.dirname(log_file_path))
+    if not exists(os.path.dirname(configure_vm_log_path)):
+        created, msg = makedirs(os.path.dirname(configure_vm_log_path))
         if not created:
-            print(PATH_CREATE_ERROR_MSG.format(os.path.dirname(log_file_path), msg))
+            print(
+                PATH_CREATE_ERROR_MSG.format(
+                    os.path.dirname(configure_vm_log_path), msg
+                )
+            )
             return PATH_CREATE_ERROR
 
     incrementer = 0
-    while exists(log_file_path):
+    while exists(configure_vm_log_path):
         if incrementer == 0:
             if verbose:
                 print(
-                    f"The configuring log file: {log_file_path} already exists, increasing the designated file name"
+                    f"The configuring log file: {configure_vm_log_path} already exists, increasing the designated file name"
                 )
-            log_file_path = f"{log_file_path}.%s" % incrementer
+            configure_vm_log_path = f"{configure_vm_log_path}.%s" % incrementer
         else:
-            file_increment = os.path.splitext(log_file_path)[1]
-            log_file_path = log_file_path.replace(file_increment, f".{incrementer + 1}")
+            file_increment = os.path.splitext(configure_vm_log_path)[1]
+            configure_vm_log_path = configure_vm_log_path.replace(
+                file_increment, f".{incrementer + 1}"
+            )
         incrementer += 1
     if verbose:
-        print(f"Generated new log file path: {log_file_path}")
+        print(f"Generated new log file path: {configure_vm_log_path}")
         print(f"Using the VM template description: {configure_vm_template_path}")
 
     # Ensure that the required template values are set for the cloud-init iso image
     # and for the VM log file that is monitored to tell when the configuration process is finished
     if "cd_iso_path" not in configure_vm_template_values:
         configure_vm_template_values.append(f"cd_iso_path={cloud_init_iso_output_path}")
-    if "log_file_path" not in configure_vm_template_values:
-        configure_vm_template_values.append(f"log_file_path={log_file_path}")
+    if "configure_vm_log_path" not in configure_vm_template_values:
+        configure_vm_template_values.append(f"log_file_path={configure_vm_log_path}")
 
     configured_id, configured_msg = configure_image(
         configure_vm_name,
@@ -419,7 +434,7 @@ def configure_vm_image(
 
     if verbose:
         print("Waiting for the configuration process to finish")
-    finished = finished_configure(log_file_path)
+    finished = finished_configure(configure_vm_log_path)
     if not finished:
         print("Failed to finish configuring the image")
         return CONFIGURE_IMAGE_ERROR

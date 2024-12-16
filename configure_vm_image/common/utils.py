@@ -1,4 +1,5 @@
 import datetime
+import os
 import sys
 
 
@@ -14,3 +15,7 @@ def to_str(o):
     if isinstance(o, bytes):
         return o.decode("utf-8")
     return o
+
+
+def expand_path(path):
+    return os.path.realpath(os.path.expanduser(path))
