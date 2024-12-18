@@ -9,7 +9,7 @@ from configure_vm_image.common.codes import SUCCESS
 from configure_vm_image.cli.configure_image import (
     add_configure_vm_image_cli_arguments,
 )
-from configure_vm_image.configure import configure_vm_image
+from configure_vm_image.cli.configure_image import configure_vm_image
 from configure_vm_image.common.utils import expand_path
 
 
