@@ -196,8 +196,8 @@ def finished_configure(configure_vm_log_path):
 
     finished = False
     while not finished:
-        loaded, content = load(configure_vm_log_path, readlines=True)
-        if loaded:
+        content = load(configure_vm_log_path, readlines=True)
+        if content and isinstance(content, (list, set, tuple)):
             for line in content:
                 if first_marker in line and second_marker in line:
                     finished = True
