@@ -74,7 +74,7 @@ installtest: venv
 
 .PHONY: test
 test:
-# TODO, add tests
+	. ${VENV}/activate; pytest -s -v tests/
 
 .PHONY: dockertest-clean
 dockertest-clean:
