@@ -1,9 +1,11 @@
+import asyncio
 import argparse
 import os
+import inspect
 import sys
 import json
 from configure_vm_image._version import __version__
-from configure_vm_image.common.utils import to_str, error_print, expand_path
+from configure_vm_image.common.utils import to_str, error_print
 from configure_vm_image.utils.io import exists, makedirs
 from configure_vm_image.common.defaults import (
     CLOUD_INIT_DIR,
@@ -24,6 +26,10 @@ from configure_vm_image.common.codes import (
     RESET_IMAGE_ERROR,
     RESET_IMAGE_ERROR_MSG,
 )
+from configure_vm_image.cli.helpers import (
+    extract_arguments,
+    strip_argument_group_prefix,
+)
 from configure_vm_image.configure import (
     reset_image,
     wait_for_vm_removed,
@@ -37,7 +43,45 @@ from configure_vm_image.configure import (
 SCRIPT_NAME = __file__
 
 
-def configure_vm_image(
+def import_from_module(module_path, module_name, func_name):
+    module = __import__(module_path, fromlist=[module_name])
+    return getattr(module, func_name)
+
+
+def add_cli_operations(
+    parser,
+    operation,
+    module_cli_input_group_prefix="configure_vm_image.cli.input_groups",
+    module_operation_prefix="configure_vm_image.cli.operations",
+):
+    operation_input_groups_func = import_from_module(
+        "{}.{}".format(module_cli_input_group_prefix, operation),
+        "{}".format(operation),
+        "{}_groups".format(operation),
+    )
+
+    provider_groups = []
+    argument_groups = []
+    input_groups = operation_input_groups_func(parser)
+    if not input_groups:
+        raise RuntimeError(
+            "No input groups were returned by the input group function: {}".format(
+                operation_input_groups_func.func_name
+            )
+        )
+
+    argument_groups = input_groups
+    parser.set_defaults(
+        func=cli_exec,
+        module_path="{}.{}.build".format(module_operation_prefix, operation),
+        module_name="build",
+        func_name="{}_operation".format(operation),
+        provider_groups=provider_groups,
+        argument_groups=argument_groups,
+    )
+
+
+async def configure_vm_image(
     image_path,
     image_format=None,
     user_data_path=os.path.join(CLOUD_INIT_DIR, "user-data"),
@@ -146,10 +190,10 @@ def configure_vm_image(
         return generated_result, response
 
     if not exists(os.path.dirname(configure_vm_log_path)):
-        created, msg = makedirs(os.path.dirname(configure_vm_log_path))
+        created = makedirs(os.path.dirname(configure_vm_log_path))
         if not created:
             response["msg"] = PATH_CREATE_ERROR_MSG.format(
-                os.path.dirname(configure_vm_log_path), msg
+                os.path.dirname(configure_vm_log_path)
             )
             response["verbose_outputs"] = verbose_outputs
             return PATH_CREATE_ERROR, response
@@ -181,7 +225,7 @@ def configure_vm_image(
     if "configure_vm_log_path" not in configure_vm_template_values:
         configure_vm_template_values.append(f"log_file_path={configure_vm_log_path}")
 
-    configured_id, configured_msg = configure_image(
+    configured_id, configured_msg = await configure_image(
         configure_vm_name,
         image_path,
         *configure_vm_template_values,
@@ -259,6 +303,7 @@ def configure_vm_image(
         )
         response["verbose_outputs"] = verbose_outputs
         return RESET_IMAGE_ERROR, response
+    return SUCCESS, "Succesfully configured image: {}".format(image_path)
 
 
 def add_configure_vm_image_cli_arguments(parser):
@@ -366,6 +411,38 @@ def add_configure_vm_image_cli_arguments(parser):
         default=False,
         help="Flag to enable verbose output during the reset.",
     )
+
+
+def cli_exec(arguments):
+    # Actions determines which function to execute
+    module_path = arguments.pop("module_path")
+    module_name = arguments.pop("module_name")
+    func_name = arguments.pop("func_name")
+
+    if "positional_arguments" in arguments:
+        positional_arguments = arguments.pop("positional_arguments")
+    else:
+        positional_arguments = []
+
+    if "argument_groups" in arguments:
+        argument_groups = arguments.pop("argument_groups")
+    else:
+        argument_groups = []
+
+    func = import_from_module(module_path, module_name, func_name)
+    if not func:
+        return False, {}
+
+    action_kwargs, _ = extract_arguments(arguments, argument_groups)
+    action_kwargs = strip_argument_group_prefix(action_kwargs, argument_groups)
+
+    action_args = positional_arguments
+    if inspect.iscoroutinefunction(func):
+        return asyncio.run(func(*action_args, **action_kwargs))
+    return func(*action_args, **action_kwargs)
+
+
+def add_base_cli_operations(parser):
     parser.add_argument(
         "--version",
         "-V",
@@ -380,28 +457,40 @@ def main(args):
         prog=SCRIPT_NAME,
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
+    # Add the basic CLI functions
+    add_base_cli_operations(parser)
+    # Add the configure image CLI arguments
     add_configure_vm_image_cli_arguments(parser)
-    args = parser.parse_args(args)
+    parsed_args = parser.parse_args(args)
+    # Convert to a dictionary
+    arguments = vars(parsed_args)
 
-    return_code, result_dict = configure_vm_image(
-        expand_path(args.image_path),
-        image_format=args.image_format,
-        user_data_path=expand_path(args.config_user_data_path),
-        meta_data_path=expand_path(args.config_meta_data_path),
-        vendor_data_path=expand_path(args.config_vendor_data_path),
-        network_config_path=expand_path(args.config_network_config_path),
-        configure_vm_name=args.configure_vm_name,
-        configure_vm_cpu_model=args.configure_vm_cpu_model,
-        configure_vm_vcpus=args.configure_vm_vcpus,
-        configure_vm_memory=args.configure_vm_memory,
-        cloud_init_iso_output_path=expand_path(args.cloud_init_iso_output_path),
-        configure_vm_log_path=expand_path(args.configure_vm_log_path),
-        configure_vm_template_path=expand_path(args.configure_vm_template_path),
-        configure_vm_template_values=args.configure_vm_template_values,
-        reset_operations=args.reset_operations,
-        verbose=args.verbose,
-        verbose_reset=args.verbose_reset,
-    )
+    if "func" not in arguments:
+        raise ValueError("Missing function to execute in prepared arguments")
+
+    func = arguments.pop("func")
+    return_code, result_dict = func(arguments)
+
+    # return_code, result_dict = configure_vm_image(
+    #     expand_path(args.image_path),
+    #     image_format=args.image_format,
+    #     user_data_path=expand_path(args.config_user_data_path),
+    #     meta_data_path=expand_path(args.config_meta_data_path),
+    #     vendor_data_path=expand_path(args.config_vendor_data_path),
+    #     network_config_path=expand_path(args.config_network_config_path),
+    #     configure_vm_name=args.configure_vm_name,
+    #     configure_vm_cpu_model=args.configure_vm_cpu_model,
+    #     configure_vm_vcpus=args.configure_vm_vcpus,
+    #     configure_vm_memory=args.configure_vm_memory,
+    #     cloud_init_iso_output_path=expand_path(args.cloud_init_iso_output_path),
+    #     configure_vm_log_path=expand_path(args.configure_vm_log_path),
+    #     configure_vm_template_path=expand_path(args.configure_vm_template_path),
+    #     configure_vm_template_values=args.configure_vm_template_values,
+    #     reset_operations=args.reset_operations,
+    #     verbose=args.verbose,
+    #     verbose_reset=args.verbose_reset,
+    # )
+
     response = {}
     if return_code == SUCCESS:
         response["status"] = "success"

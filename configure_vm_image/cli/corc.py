@@ -56,7 +56,7 @@ def corc_configure_vm_cli_exec(args):
     verbose = args.get("verbose", False)
     verbose_reset = args.get("verbose_reset", False)
 
-    return_code, result_dict = configure_vm_image(
+    return_code, result_dict = await configure_vm_image(
         expand_path(image_path),
         image_format=image_format,
         user_data_path=expand_path(config_user_data_path),

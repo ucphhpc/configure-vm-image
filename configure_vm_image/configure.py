@@ -121,7 +121,7 @@ def discover_vm_orchestrator():
     return orchestrator
 
 
-def configure_vm(name, image, *template_args, **kwargs):
+async def configure_vm(name, image, *template_args, **kwargs):
     """This launches a subprocess that configures the VM image on boot."""
     vm_orchestrator = discover_vm_orchestrator()
     create_command = [
@@ -175,9 +175,9 @@ def configure_vm(name, image, *template_args, **kwargs):
     return instance_id, start_result["output"]
 
 
-def configure_image(name, image, *template_args, **configure_kwargs):
+async def configure_image(name, image, *template_args, **configure_kwargs):
     """Configures the image using the configuration path"""
-    configure_result, configure_msg = configure_vm(
+    configure_result, configure_msg = await configure_vm(
         name, image, *template_args, **configure_kwargs
     )
     if not configure_result:

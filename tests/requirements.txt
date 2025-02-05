@@ -1,1 +1,2 @@
 pytest
+gen_vm_image>=0.0.6a7
