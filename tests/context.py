@@ -26,7 +26,7 @@ class AsyncConfigureTestContext:
 
         self.image_config = {
             "name": TEST_IMAGE_NAME,
-            "size": "1G",
+            "size": "3G",
             "input": INPUT_IMAGE_URL,
             "output_directory": self.test_tmp_directory,
             "output_format": TEST_IMAGE_FORMAT,
@@ -41,6 +41,7 @@ class AsyncConfigureTestContext:
             success, msg = await generate_image(
                 self.image_config["name"],
                 self.image_config["size"],
+                input=self.image_config["input"],
                 output_directory=self.image_config["output_directory"],
                 output_format=self.image_config["output_format"],
             )
@@ -50,5 +51,4 @@ class AsyncConfigureTestContext:
     # Should be used by the non async function tearDownClass to ensure that
     # the following cleanup is done before the class is destroyed
     def tearDown(self):
-        pass
-        # assert remove(self.test_tmp_directory, recursive=True)
+        assert remove(self.test_tmp_directory, recursive=True)
