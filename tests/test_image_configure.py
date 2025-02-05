@@ -45,11 +45,10 @@ class AsyncTestImageConfiguration(unittest.IsolatedAsyncioTestCase):
             configure_vm_name=self.configure_vm_name,
             configure_vm_vcpus="2",
             configure_vm_memory="2048MiB",
+            configure_vm_cpu_model="host",
             configure_vm_log_path=self.configure_vm_log_path,
-            meta_data_path=join(cloud_init_directory, "meta-data"),
             network_config_path=join(cloud_init_directory, "network-config"),
             user_data_path=join(cloud_init_directory, "user-data"),
-            vendor_data_path=join(cloud_init_directory, "vendor-data"),
             cloud_init_iso_output_path=join(
                 cloud_init_output_directory, f"{self.seed}-cidata.iso"
             ),

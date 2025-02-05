@@ -6,7 +6,8 @@ from configure_vm_image.utils.io import join, makedirs, remove, exists
 
 TEST_IMAGE_NAME = "test_image"
 TEST_IMAGE_FORMAT = "qcow2"
-INPUT_IMAGE_URL = "https://dl.rockylinux.org/pub/rocky/9/images/x86_64/Rocky-9-GenericCloud-Base.latest.x86_64.qcow2"
+INPUT_IMAGE_URL = "https://sid.erda.dk/share_redirect/B0AM7a5lpC/Rocky-9-GenericCloud-Base-9.3-20231113.0.x86_64.qcow2"
+INPUT_IMAGE_CHECKSUM = "7713278c37f29b0341b0a841ca3ec5c3724df86b4d97e7ee4a2a85def9b2e651"
 
 
 class AsyncConfigureTestContext:
@@ -28,6 +29,7 @@ class AsyncConfigureTestContext:
             "name": TEST_IMAGE_NAME,
             "size": "3G",
             "input": INPUT_IMAGE_URL,
+            "input_checksum": INPUT_IMAGE_CHECKSUM,
             "output_directory": self.test_tmp_directory,
             "output_format": TEST_IMAGE_FORMAT,
         }
@@ -42,6 +44,8 @@ class AsyncConfigureTestContext:
                 self.image_config["name"],
                 self.image_config["size"],
                 input=self.image_config["input"],
+                input_checksum=self.image_config["input_checksum"],
+                input_checksum_type="sha256",
                 output_directory=self.image_config["output_directory"],
                 output_format=self.image_config["output_format"],
             )
