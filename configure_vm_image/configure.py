@@ -110,7 +110,8 @@ def generate_image_configuration(
 
 
 def discover_vm_orchestrator():
-    """Discovers the kvm command on the system"""
+    """Discovers the vm orchestrator command line tool on the system"""
+    # TODO, accept the orchestrator as an argument to be dynamically discovered
     orchestrator = "libvirt-provider"
     if not which(orchestrator):
         raise FileNotFoundError(
@@ -124,6 +125,7 @@ def discover_vm_orchestrator():
 async def configure_vm(name, image, *template_args, **kwargs):
     """This launches a subprocess that configures the VM image on boot."""
     vm_orchestrator = discover_vm_orchestrator()
+    # TODO discover the specific vm orchestrator argument structure
     create_command = [
         vm_orchestrator,
         "instance",
@@ -137,6 +139,8 @@ async def configure_vm(name, image, *template_args, **kwargs):
         if value:
             configure_key = "--{}".format(key).replace("_", "-")
             create_command.extend([configure_key, value])
+
+    print(create_command)
     create_success, create_result = run(create_command, output_format="json")
     if not create_success:
         return False, create_result["error"]

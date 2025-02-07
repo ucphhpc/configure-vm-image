@@ -4,7 +4,7 @@ import random
 from configure_vm_image.cli.configure_image import configure_vm_image
 from configure_vm_image.utils.io import join, copy, exists, remove
 from configure_vm_image.common.codes import SUCCESS
-from .context import AsyncConfigureTestContext
+from .context import AsyncConfigureTestContext, CPU_ARCHITECTURE
 
 
 class AsyncTestImageConfiguration(unittest.IsolatedAsyncioTestCase):
@@ -27,6 +27,11 @@ class AsyncTestImageConfiguration(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(copy(self.context.image, self.image_to_configure))
         self.assertTrue(exists(self.image_to_configure))
 
+        self.configure_vm_memory = "2048MiB"
+        self.configure_vm_vcpus = "2"
+        self.configure_vm_cpu_arch = CPU_ARCHITECTURE
+        self.configure_vm_machine = "virt"
+
     async def asyncTearDown(self):
         # Cleanup the test images
         self.assertTrue(remove(self.image_to_configure))
@@ -40,18 +45,25 @@ class AsyncTestImageConfiguration(unittest.IsolatedAsyncioTestCase):
         cloud_init_output_directory = join(
             self.context.test_tmp_directory, "cloud-init"
         )
+
+        configure_vm_template_values = [
+            f"memory_size={self.configure_vm_memory}",
+            f"num_vcpus={self.configure_vm_vcpus}",
+            f"cpu_architecture={self.configure_vm_cpu_arch}",
+            f"machine={self.configure_vm_machine}",
+        ]
+
         return_code, msg = await configure_vm_image(
             self.image_to_configure,
-            configure_vm_name=self.configure_vm_name,
-            configure_vm_vcpus="2",
-            configure_vm_memory="2048MiB",
-            configure_vm_cpu_model="host",
             configure_vm_log_path=self.configure_vm_log_path,
             network_config_path=join(cloud_init_directory, "network-config"),
             user_data_path=join(cloud_init_directory, "user-data"),
             cloud_init_iso_output_path=join(
                 cloud_init_output_directory, f"{self.seed}-cidata.iso"
             ),
+            configure_vm_name=self.configure_vm_name,
+            configure_vm_template_path=self.context.image_template_config,
+            configure_vm_template_values=configure_vm_template_values,
             verbose=True,
             verbose_reset=True,
         )

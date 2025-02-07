@@ -5,11 +5,10 @@ import inspect
 import sys
 import json
 from configure_vm_image._version import __version__
-from configure_vm_image.common.utils import to_str, error_print
+from configure_vm_image.common.utils import to_str, error_print, expand_path
 from configure_vm_image.utils.io import exists, makedirs
 from configure_vm_image.common.defaults import (
     CLOUD_INIT_DIR,
-    PACKAGE_NAME,
     TMP_DIR,
     RES_DIR,
 )
@@ -88,11 +87,9 @@ async def configure_vm_image(
     meta_data_path=os.path.join(CLOUD_INIT_DIR, "meta-data"),
     vendor_data_path=os.path.join(CLOUD_INIT_DIR, "vendor-data"),
     network_config_path=os.path.join(CLOUD_INIT_DIR, "network-config"),
-    configure_vm_name=PACKAGE_NAME,
-    configure_vm_cpu_model=None,
-    configure_vm_vcpus="1",
-    configure_vm_memory="2048MiB",
     cloud_init_iso_output_path=os.path.join(CLOUD_INIT_DIR, "cidata.iso"),
+    configure_vm_orchestrator="libvirt-provider",
+    configure_vm_name="configure-vm-image",
     configure_vm_log_path=os.path.join(TMP_DIR, "configure-vm.log"),
     configure_vm_template_path=os.path.join(RES_DIR, "configure-vm-template.xml.j2"),
     configure_vm_template_values=None,
@@ -230,10 +227,6 @@ async def configure_vm_image(
         image_path,
         *configure_vm_template_values,
         template_path=configure_vm_template_path,
-        disk_driver_type=image_format,
-        cpu_mode=configure_vm_cpu_model,
-        num_vcpus=configure_vm_vcpus,
-        memory_size=configure_vm_memory,
     )
     if verbose:
         verbose_outputs.append(configured_msg)
@@ -338,30 +331,16 @@ def add_configure_vm_image_cli_arguments(parser):
         that is used to configure the network settings of the image.""",
     )
     parser.add_argument(
+        "--configure-vm-orchestrator",
+        "-cv-orch",
+        default="libvirt-provider",
+        help="The orchestrator to use when provisioning the virtual machine that is used to configure a particular virtual machine image",
+    )
+    parser.add_argument(
         "--configure-vm-name",
-        "-n",
-        default=PACKAGE_NAME,
-        help="""The name of the VM that is used to configure the image.""",
-    )
-    # https://qemu-project.gitlab.io/qemu/system/qemu-cpu-models.html
-    parser.add_argument(
-        "--configure-vm-cpu-model",
-        "-cv-cpu",
-        default=None,
-        help="""The cpu model to use for virtualization when configuring the image.""",
-    )
-    parser.add_argument(
-        "--configure-vm-vcpus",
-        "-cv-vcpus",
-        default="1",
-        type=str,
-        help="""The number of virtual CPUs to allocate to the VM when configuring the image.""",
-    )
-    parser.add_argument(
-        "--configure-vm-memory",
-        "-cv-m",
-        default="2048MiB",
-        help="""The amount of memory to allocate to the VM when configuring the image.""",
+        "-cv-name",
+        default="configure-vm-image",
+        help="The name of the VM that is used to configure the image.",
     )
     parser.add_argument(
         "--cloud-init-iso-output-path",
@@ -471,25 +450,21 @@ def main(args):
     func = arguments.pop("func")
     return_code, result_dict = func(arguments)
 
-    # return_code, result_dict = configure_vm_image(
-    #     expand_path(args.image_path),
-    #     image_format=args.image_format,
-    #     user_data_path=expand_path(args.config_user_data_path),
-    #     meta_data_path=expand_path(args.config_meta_data_path),
-    #     vendor_data_path=expand_path(args.config_vendor_data_path),
-    #     network_config_path=expand_path(args.config_network_config_path),
-    #     configure_vm_name=args.configure_vm_name,
-    #     configure_vm_cpu_model=args.configure_vm_cpu_model,
-    #     configure_vm_vcpus=args.configure_vm_vcpus,
-    #     configure_vm_memory=args.configure_vm_memory,
-    #     cloud_init_iso_output_path=expand_path(args.cloud_init_iso_output_path),
-    #     configure_vm_log_path=expand_path(args.configure_vm_log_path),
-    #     configure_vm_template_path=expand_path(args.configure_vm_template_path),
-    #     configure_vm_template_values=args.configure_vm_template_values,
-    #     reset_operations=args.reset_operations,
-    #     verbose=args.verbose,
-    #     verbose_reset=args.verbose_reset,
-    # )
+    return_code, result_dict = configure_vm_image(
+        expand_path(args.image_path),
+        image_format=args.image_format,
+        user_data_path=expand_path(args.config_user_data_path),
+        meta_data_path=expand_path(args.config_meta_data_path),
+        vendor_data_path=expand_path(args.config_vendor_data_path),
+        network_config_path=expand_path(args.config_network_config_path),
+        cloud_init_iso_output_path=expand_path(args.cloud_init_iso_output_path),
+        configure_vm_log_path=expand_path(args.configure_vm_log_path),
+        configure_vm_template_path=expand_path(args.configure_vm_template_path),
+        configure_vm_template_values=args.configure_vm_template_values,
+        reset_operations=args.reset_operations,
+        verbose=args.verbose,
+        verbose_reset=args.verbose_reset,
+    )
 
     response = {}
     if return_code == SUCCESS:

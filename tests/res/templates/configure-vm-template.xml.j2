@@ -6,7 +6,7 @@
         <type arch='{{cpu_architecture}}' machine='{{machine}}'>hvm</type>
         <boot dev='hd'/>
     </os>
-    <cpu mode='host_model'/>
+    <cpu mode='{{cpu_mode}}'/>
     <devices>
         <disk type='file' device='disk'>
             <driver name='qemu' type='{{image_format}}'/>

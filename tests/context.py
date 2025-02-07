@@ -9,6 +9,7 @@ from configure_vm_image.utils.io import join, makedirs, remove, exists, load
 CPU_ARCHITECTURE = platform.machine()
 TEST_IMAGE_NAME = "test_image"
 TEST_IMAGE_FORMAT = "qcow2"
+TEST_IMAGE_TEMPLATE_CONFIG = "configure-vm-template.xml.j2"
 INPUT_IMAGE_URL = "https://sid.erda.dk/share_redirect/B0AM7a5lpC/Rocky-9-GenericCloud-Base.latest.{}.qcow2".format(
     CPU_ARCHITECTURE
 )
@@ -40,6 +41,9 @@ class AsyncConfigureTestContext:
         # Download the test image for the path input test
         self.test_tmp_directory = os.path.realpath(join("tests", "tmp"))
         self.test_res_directory = os.path.realpath(join("tests", "res"))
+        self.test_res_template_directory = os.path.realpath(
+            join(self.test_res_directory, "templates")
+        )
         if not exists(self.test_tmp_directory):
             assert makedirs(self.test_tmp_directory)
 
@@ -54,7 +58,6 @@ class AsyncConfigureTestContext:
         self.image = join(
             self.test_tmp_directory, "{}.{}".format(TEST_IMAGE_NAME, TEST_IMAGE_FORMAT)
         )
-
         if not exists(self.image):
             checksum_file_path = join(
                 self.test_tmp_directory, f"{TEST_IMAGE_NAME}.checksum"
@@ -80,6 +83,11 @@ class AsyncConfigureTestContext:
             )
             assert success == SUCCESS
         assert exists(self.image)
+
+        self.image_template_config = join(
+            self.test_res_template_directory, TEST_IMAGE_TEMPLATE_CONFIG
+        )
+        assert exists(self.image_template_config)
 
     # Should be used by the non async function tearDownClass to ensure that
     # the following cleanup is done before the class is destroyed

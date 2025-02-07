@@ -64,10 +64,6 @@ The parameter names for these can be discovered by running the command with the 
                               [--config-meta-data-path CONFIG_META_DATA_PATH]
                               [--config-vendor-data-path CONFIG_VENDOR_DATA_PATH]
                               [--config-network-config-path CONFIG_NETWORK_CONFIG_PATH]
-                              [--configure-vm-name CONFIGURE_VM_NAME]
-                              [--configure-vm-cpu-model CONFIGURE_VM_CPU_MODEL]
-                              [--configure-vm-vcpus CONFIGURE_VM_VCPUS]
-                              [--configure-vm-memory CONFIGURE_VM_MEMORY]
                               [--cloud-init-iso-output-path CLOUD_INIT_ISO_OUTPUT_PATH]
                               [--configure-vm-log-path CONFIGURE_VM_LOG_PATH]
                               [--configure-vm-template-path CONFIGURE_VM_TEMPLATE_PATH]
@@ -93,14 +89,6 @@ The parameter names for these can be discovered by running the command with the 
     --config-network-config-path CONFIG_NETWORK_CONFIG_PATH
                             The path to the cloud-init network-config configuration file that is used to configure the network settings of the image.
                             (default: cloud-init/network-config)
-    --configure-vm-name CONFIGURE_VM_NAME, -n CONFIGURE_VM_NAME
-                            The name of the VM that is used to configure the image. (default: configure-vm-image)
-    --configure-vm-cpu-model CONFIGURE_VM_CPU_MODEL, -cv-cpu CONFIGURE_VM_CPU_MODEL
-                            The cpu model to use for virtualization when configuring the image. (default: None)
-    --configure-vm-vcpus CONFIGURE_VM_VCPUS, -cv-vcpus CONFIGURE_VM_VCPUS
-                            The number of virtual CPUs to allocate to the VM when configuring the image. (default: 1)
-    --configure-vm-memory CONFIGURE_VM_MEMORY, -cv-m CONFIGURE_VM_MEMORY
-                            The amount of memory to allocate to the VM when configuring the image. (default: 2048MiB)
     --cloud-init-iso-output-path CLOUD_INIT_ISO_OUTPUT_PATH, -ci-output CLOUD_INIT_ISO_OUTPUT_PATH
                             The path to the cloud-init output ISO image file that is generated based 
                             on the data defined in the user-data, meta-data, vendor-data, and network-config files.

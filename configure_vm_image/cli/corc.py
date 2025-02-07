@@ -1,7 +1,6 @@
 import os
 from configure_vm_image.common.defaults import (
     CLOUD_INIT_DIR,
-    PACKAGE_NAME,
     TMP_DIR,
     RES_DIR,
 )
@@ -37,13 +36,10 @@ def corc_configure_vm_cli_exec(args):
     config_network_config_path = args.get(
         "config_network_config_path", os.path.join(CLOUD_INIT_DIR, "network-config")
     )
-    configure_vm_name = args.get("configure_vm_name", PACKAGE_NAME)
-    configure_vm_cpu_model = args.get("configure_vm_cpu_model", None)
-    configure_vm_vcpus = args.get("configure_vm_cpu_vcpus", "1")
-    configure_vm_memory = args.get("configure_vm_memory", "2048MiB")
     cloud_init_iso_output_path = args.get(
         "cloud_init_iso_output_path", os.path.join(CLOUD_INIT_DIR, "cidata.iso")
     )
+    configure_vm_name = args.get("configure_vm_name", "configure-vm-image")
     configure_vm_log_path = args.get(
         "configure_vm_log_path", os.path.join(TMP_DIR, "configure-vm.log")
     )
@@ -63,11 +59,8 @@ def corc_configure_vm_cli_exec(args):
         meta_data_path=expand_path(config_meta_data_path),
         vendor_data_path=expand_path(config_vendor_data_path),
         network_config_path=expand_path(config_network_config_path),
-        configure_vm_name=configure_vm_name,
-        configure_vm_cpu_model=configure_vm_cpu_model,
-        configure_vm_vcpus=configure_vm_vcpus,
-        configure_vm_memory=configure_vm_memory,
         cloud_init_iso_output_path=expand_path(cloud_init_iso_output_path),
+        configure_vm_name=configure_vm_name,
         configure_vm_log_path=expand_path(configure_vm_log_path),
         configure_vm_template_path=expand_path(configure_vm_template_path),
         configure_vm_template_values=configure_vm_template_values,
