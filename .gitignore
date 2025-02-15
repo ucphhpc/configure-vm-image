@@ -171,5 +171,7 @@ configure-images/
 # Ignore the generated log files
 *.log*
 
+.vscode/
+
 # Ignore the cloud-init directory
 cloud-init/
