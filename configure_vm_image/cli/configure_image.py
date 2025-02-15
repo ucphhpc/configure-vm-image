@@ -221,6 +221,8 @@ async def configure_vm_image(
         configure_vm_template_values.append(f"cd_iso_path={cloud_init_iso_output_path}")
     if "configure_vm_log_path" not in configure_vm_template_values:
         configure_vm_template_values.append(f"log_file_path={configure_vm_log_path}")
+    if "image_format" not in configure_vm_template_values:
+        configure_vm_template_values.append(f"image_format={image_format}")
 
     configured_id, configured_msg = await configure_image(
         configure_vm_name,
