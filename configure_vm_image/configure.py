@@ -140,7 +140,6 @@ async def configure_vm(name, image, *template_args, **kwargs):
             configure_key = "--{}".format(key).replace("_", "-")
             create_command.extend([configure_key, value])
 
-    print(create_command)
     create_success, create_result = run(create_command, output_format="json")
     if not create_success:
         return False, create_result["error"]
