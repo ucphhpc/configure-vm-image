@@ -1,2 +1,3 @@
 pytest
 gen_vm_image>=0.0.6a7
+libvirt-provider>=0.0.1a6
