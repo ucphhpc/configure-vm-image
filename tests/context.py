@@ -10,12 +10,10 @@ CPU_ARCHITECTURE = platform.machine()
 TEST_IMAGE_NAME = "test_image"
 TEST_IMAGE_FORMAT = "qcow2"
 TEST_IMAGE_TEMPLATE_CONFIG = "configure-vm-template.xml.j2"
-INPUT_IMAGE_URL = "https://sid.erda.dk/share_redirect/B0AM7a5lpC/Rocky-9-GenericCloud-Base.latest.{}.qcow2".format(
-    CPU_ARCHITECTURE
-)
-INPUT_IMAGE_CHECKSUM_URL = "https://sid.erda.dk/share_redirect/B0AM7a5lpC/Rocky-9-GenericCloud-Base.latest.{}.qcow2.chksum.txt".format(
-    CPU_ARCHITECTURE
-)
+TEST_IMAGE_VERSION = "9.5-20241118.0"
+
+INPUT_IMAGE_URL = f"https://sid.erda.dk/share_redirect/B0AM7a5lpC/Rocky-9-GenericCloud-Base-{TEST_IMAGE_VERSION}.{CPU_ARCHITECTURE}.{TEST_IMAGE_FORMAT}"
+INPUT_IMAGE_CHECKSUM_URL = f"https://sid.erda.dk/share_redirect/B0AM7a5lpC/Rocky-9-GenericCloud-Base-{TEST_IMAGE_VERSION}.{CPU_ARCHITECTURE}.{TEST_IMAGE_FORMAT}.chksum.txt"
 
 
 def extract_checksum_from_image_file(path):
@@ -49,7 +47,7 @@ class AsyncConfigureTestContext:
 
         self.image_config = {
             "name": TEST_IMAGE_NAME,
-            "size": "3G",
+            "size": "1G",
             "input": INPUT_IMAGE_URL,
             "output_directory": self.test_tmp_directory,
             "output_format": TEST_IMAGE_FORMAT,

@@ -6,17 +6,17 @@
         <type arch='{{cpu_architecture}}' machine='{{machine}}'>hvm</type>
         <boot dev='hd'/>
     </os>
-    <cpu mode='{{cpu_mode}}'/>
+    <cpu mode='host-model'/>
     <devices>
         <disk type='file' device='disk'>
-            <driver name='qemu' type='{{image_format}}'/>
-            <source file='{{image_path}}'/>
-            <target dev='vda' bus='virtio'/>
+            <driver name='qemu' type='qcow2'/>
+            <source file='{{disk_image_path}}'/>
+            <target dev='hda' bus='ide'/>
         </disk>
 	    <disk type='file' device='cdrom'>
-            <driver name='qemu' type='raw' cache='none'/>
+            <driver name='qemu' type='raw'/>
             <source file='{{cd_iso_path}}'/>
-            <target dev='sda' bus='sata'/>
+            <target dev='hdb' bus='ide'/>
             <readonly/>
         </disk>
         <serial type='pty'>

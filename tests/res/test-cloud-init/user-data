@@ -5,7 +5,6 @@ system_info:
     home: /home/default_user
     sudo: ALL=(ALL) NOPASSWD:ALL
     # Can for instance use mkpasswd -m sha-512 to generate a hashed password
-    passwd: "hashed_password_here"
     lock_passwd: false
     shell: /bin/bash
 ssh_pwauth: False
