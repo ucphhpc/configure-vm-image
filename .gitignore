@@ -175,3 +175,5 @@ configure-images/
 
 # Ignore the cloud-init directory
 cloud-init/
+
+tests/tmp
