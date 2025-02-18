@@ -1,27 +1,27 @@
 <domain type='qemu'>
-    <name>{{name}}</name>
-    <memory>{{memory_size}}</memory>
-    <vcpu>{{num_vcpus}}</vcpu>
+    <name>{name}</name>
+    <memory>{memory_size}</memory>
+    <vcpu>{num_vcpus}</vcpu>
     <os>
-        <type arch='{{cpu_architecture}}' machine='{{machine}}'>hvm</type>
+        <type arch='{cpu_architecture}' machine='{machine}'>hvm</type>
         <boot dev='hd'/>
     </os>
-    <cpu mode='host_model'/>
+    <cpu mode='host-model'/>
     <devices>
         <disk type='file' device='disk'>
-            <driver name='qemu' type='{{image_format}}'/>
-            <source file='{{image_path}}'/>
+            <driver name='qemu' type='{image_format}'/>
+            <source file='{image_path}'/>
             <target dev='vda' bus='virtio'/>
         </disk>
 	    <disk type='file' device='cdrom'>
             <driver name='qemu' type='raw' cache='none'/>
-            <source file='{{cd_iso_path}}'/>
+            <source file='{cd_iso_path}'/>
             <target dev='sda' bus='sata'/>
             <readonly/>
         </disk>
         <serial type='pty'>
             <target port='0'/>
-            <log file='{{log_file_path}}' append='on'/>
+            <log file='{log_file_path}' append='on'/>
         </serial>
         <console type='pty'>
             <target type='serial' port='0'/>

@@ -25,7 +25,7 @@ class AsyncTestImageConfiguration(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(copy(self.context.image, self.image_to_configure))
         self.assertTrue(exists(self.image_to_configure))
 
-        self.configure_vm_memory = "2048MiB"
+        self.configure_vm_memory = "1024MiB"
         self.configure_vm_vcpus = "1"
         self.configure_vm_cpu_arch = CPU_ARCHITECTURE
         self.configure_vm_machine = "pc"

@@ -47,7 +47,9 @@ class AsyncConfigureTestContext:
 
         self.image_config = {
             "name": TEST_IMAGE_NAME,
-            "size": "1G",
+            # TODO, dynamically discover the size of the input image
+            # This output size should not be less than what the original input disk image size
+            "size": "10G",
             "input": INPUT_IMAGE_URL,
             "output_directory": self.test_tmp_directory,
             "output_format": TEST_IMAGE_FORMAT,
