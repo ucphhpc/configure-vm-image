@@ -1,2 +1,2 @@
 argparse
-libvirt-provider>=0.0.1a6
+libvirt-provider>=0.0.1
