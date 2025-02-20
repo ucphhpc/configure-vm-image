@@ -1,12 +1,11 @@
 import os
-import platform
 from gen_vm_image.common.codes import SUCCESS
 from gen_vm_image.image import generate_image
 from gen_vm_image.utils.net import download_file
 from configure_vm_image.utils.io import join, makedirs, remove, exists, load
+from .common import CPU_ARCHITECTURE
 
 
-CPU_ARCHITECTURE = platform.machine()
 TEST_IMAGE_NAME = "test_image"
 TEST_IMAGE_FORMAT = "qcow2"
 TEST_IMAGE_TEMPLATE_CONFIG = "configure-vm-template.xml.j2"

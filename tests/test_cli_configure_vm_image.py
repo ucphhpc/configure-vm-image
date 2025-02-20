@@ -1,8 +1,8 @@
 import unittest
 import os
 import random
-from configure_vm_image.cli.configure_image import configure_vm_image
-from configure_vm_image.utils.io import join, copy, exists, remove
+from configure_vm_image.utils.io import exists, join, copy, remove
+from configure_vm_image.cli.configure_image import main
 from configure_vm_image.common.codes import SUCCESS
 from .common import (
     CPU_ARCHITECTURE,
@@ -13,7 +13,16 @@ from .common import (
 from .context import AsyncConfigureTestContext
 
 
-class AsyncTestImageConfiguration(unittest.IsolatedAsyncioTestCase):
+def cli_action(*args):
+    return_code = None
+    try:
+        return_code = main(args)
+    except SystemExit as e:
+        return_code = e.code
+    return return_code
+
+
+class TestCLIConfigurer(unittest.IsolatedAsyncioTestCase):
     context = AsyncConfigureTestContext()
 
     async def asyncSetUp(self):
@@ -32,7 +41,6 @@ class AsyncTestImageConfiguration(unittest.IsolatedAsyncioTestCase):
         self.cloud_init_output_directory = join(
             self.context.test_tmp_directory, "cloud-init"
         )
-
         self.assertTrue(copy(self.context.image, self.image_to_configure))
         self.assertTrue(exists(self.image_to_configure))
 
@@ -48,28 +56,20 @@ class AsyncTestImageConfiguration(unittest.IsolatedAsyncioTestCase):
     def tearDownClass(cls):
         cls.context.tearDown()
 
-    async def test_basic_configure(self):
-
-        configure_vm_template_values = [
-            f"memory_size={CONFIGURE_VM_MEMORY}",
-            f"num_vcpus={CONFIGURE_VM_VCPUS}",
-            f"cpu_architecture={CPU_ARCHITECTURE}",
-            f"machine={CONFIGURE_VM_MACHINE}",
-        ]
-
-        return_code, msg = await configure_vm_image(
-            self.image_to_configure,
-            network_config_path=join(self.cloud_init_directory, "network-config"),
-            user_data_path=join(self.cloud_init_directory, "user-data"),
-            cloud_init_iso_output_path=join(
-                self.cloud_init_output_directory, f"{self.seed}-cidata.iso"
-            ),
-            configure_vm_name=self.configure_vm_name,
-            configure_vm_log_path=self.configure_vm_log_path,
-            configure_vm_template_path=self.context.image_template_config,
-            configure_vm_template_values=configure_vm_template_values,
-            verbose=True,
-            verbose_reset=True,
+    def test_configurer_cli(self):
+        configure_vm_template_values = " ".join(
+            [
+                f"memory_size={CONFIGURE_VM_MEMORY}",
+                f"num_vcpus={CONFIGURE_VM_VCPUS}",
+                f"cpu_architecture={CPU_ARCHITECTURE}",
+                f"machine={CONFIGURE_VM_MACHINE}",
+            ]
         )
+
+        args = [
+            self.image_to_configure,
+            "--configure-vm-template-values",
+            configure_vm_template_values,
+        ]
+        return_code = cli_action(*args)
         self.assertEqual(return_code, SUCCESS)
-        self.assertIsNotNone(msg)

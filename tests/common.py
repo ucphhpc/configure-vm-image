@@ -1,0 +1,7 @@
+import platform
+
+CONFIGURE_VM_MEMORY = "1024MiB"
+CONFIGURE_VM_VCPUS = "1"
+CONFIGURE_VM_MACHINE = "pc"
+
+CPU_ARCHITECTURE = platform.machine()
