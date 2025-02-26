@@ -57,7 +57,7 @@ class TestCLIConfigurer(unittest.IsolatedAsyncioTestCase):
         cls.context.tearDown()
 
     def test_configurer_cli(self):
-        configure_vm_template_values = " ".join(
+        configure_vm_template_values = ",".join(
             [
                 f"memory_size={CONFIGURE_VM_MEMORY}",
                 f"num_vcpus={CONFIGURE_VM_VCPUS}",
@@ -68,8 +68,20 @@ class TestCLIConfigurer(unittest.IsolatedAsyncioTestCase):
 
         args = [
             self.image_to_configure,
+            "--config-user-data-path",
+            join(self.cloud_init_directory, "user-data"),
+            "--config-network-config-path",
+            join(self.cloud_init_directory, "network-config"),
+            "--cloud-init-iso-output-path",
+            join(self.cloud_init_output_directory, f"{self.seed}-cidata.iso"),
+            "--configure-vm-name",
+            self.configure_vm_name,
+            "--configure-vm-log-path",
+            self.configure_vm_log_path,
             "--configure-vm-template-values",
             configure_vm_template_values,
+            "--configure-vm-template-path",
+            self.context.image_template_config,
         ]
         return_code = cli_action(*args)
         self.assertEqual(return_code, SUCCESS)

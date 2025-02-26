@@ -492,4 +492,5 @@ async def configure_vm_image(
         )
         response["verbose_outputs"] = verbose_outputs
         return RESET_IMAGE_ERROR, response
-    return SUCCESS, "Succesfully configured image: {}".format(image_path)
+    response["msg"] = "Succesfully configured image: {}".format(image_path)
+    return SUCCESS, response

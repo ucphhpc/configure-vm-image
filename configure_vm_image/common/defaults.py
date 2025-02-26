@@ -11,3 +11,4 @@ CONFIGURE_IMAGE_TMP_DIR = os.path.join(os.sep, "tmp", "configure-vm-image")
 VM_DISK_DIR = "vmdisks"
 TMP_DIR = "tmp"
 RES_DIR = "res"
+CONFIGURE_ARGUMENT = "configure_argument"

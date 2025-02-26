@@ -4,6 +4,7 @@ import inspect
 import sys
 import json
 from configure_vm_image._version import __version__
+from configure_vm_image.common.defaults import CONFIGURE_ARGUMENT
 from configure_vm_image.common.utils import to_str, error_print
 from configure_vm_image.common.codes import (
     SUCCESS,
@@ -36,10 +37,11 @@ def add_cli_operations(
     )
 
     argument_groups = operation_input_groups_func(parser)
+
     parser.set_defaults(
         func=cli_exec,
-        module_path="{}.{}.configure".format(module_operation_prefix, operation),
-        module_name="configure",
+        module_path="{}.{}".format(module_operation_prefix, operation),
+        module_name="{}".format(operation),
         func_name="{}_operation".format(operation),
         argument_groups=argument_groups,
     )
@@ -109,7 +111,7 @@ def main(args):
         response["status"] = "success"
     else:
         response["status"] = "failed"
-    if args.verbose:
+    if arguments.get("{}_verbose".format(CONFIGURE_ARGUMENT), False):
         response["outputs"] = result_dict.get("verbose_outputs", [])
     response["msg"] = result_dict.get("msg", "")
     response["return_code"] = return_code
