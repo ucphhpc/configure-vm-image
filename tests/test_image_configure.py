@@ -1,7 +1,7 @@
 import unittest
 import os
 import random
-from configure_vm_image.cli.configure_image import configure_vm_image
+from configure_vm_image.configure import configure_vm_image
 from configure_vm_image.utils.io import join, copy, exists, remove
 from configure_vm_image.common.codes import SUCCESS
 from .common import (
@@ -49,7 +49,6 @@ class AsyncTestImageConfiguration(unittest.IsolatedAsyncioTestCase):
         cls.context.tearDown()
 
     async def test_basic_configure(self):
-
         configure_vm_template_values = [
             f"memory_size={CONFIGURE_VM_MEMORY}",
             f"num_vcpus={CONFIGURE_VM_VCPUS}",

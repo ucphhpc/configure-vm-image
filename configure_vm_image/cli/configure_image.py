@@ -35,16 +35,7 @@ def add_cli_operations(
         "{}_groups".format(operation),
     )
 
-    argument_groups = []
-    input_groups = operation_input_groups_func(parser)
-    if not input_groups:
-        raise RuntimeError(
-            "No input groups were returned by the input group function: {}".format(
-                operation_input_groups_func.__name__
-            )
-        )
-
-    argument_groups = input_groups
+    argument_groups = operation_input_groups_func(parser)
     parser.set_defaults(
         func=cli_exec,
         module_path="{}.{}.configure".format(module_operation_prefix, operation),
