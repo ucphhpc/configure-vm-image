@@ -58,51 +58,68 @@ These configuration files includes::
 Therefore, the ``configure-vm-image`` tool attempts to load each of these files when launched from the given parameter set paths for each of them.
 The parameter names for these can be discovered by running the command with the ``--help`` flag::
 
-    usage: configure_image.py [-h]
-                              [--image-format IMAGE_FORMAT]
-                              [--config-user-data-path CONFIG_USER_DATA_PATH]
-                              [--config-meta-data-path CONFIG_META_DATA_PATH]
-                              [--config-vendor-data-path CONFIG_VENDOR_DATA_PATH]
-                              [--config-network-config-path CONFIG_NETWORK_CONFIG_PATH]
-                              [--cloud-init-iso-output-path CLOUD_INIT_ISO_OUTPUT_PATH]
-                              [--configure-vm-log-path CONFIGURE_VM_LOG_PATH]
-                              [--configure-vm-template-path CONFIGURE_VM_TEMPLATE_PATH]
-                              [--configure-vm-template-values KEY=VALUE [KEY=VALUE ...]]
-                              [--reset-operations RESET_OPERATIONS]
-                              [--verbose]
-                              image_path
-
-    positional arguments:
-    image_path            The path to the image that is to be configured.
+usage: configure_image.py [-h]
+    [--version]
+    [--image-format CONFIGURE_ARGUMENT_IMAGE_FORMAT]
+    [--config-user-data-path CONFIGURE_ARGUMENT_USER_DATA_PATH]
+    [--config-meta-data-path CONFIGURE_ARGUMENT_META_DATA_PATH]
+    [--config-vendor-data-path CONFIGURE_ARGUMENT_VENDOR_DATA_PATH]
+    [--config-network-config-path CONFIGURE_ARGUMENT_NETWORK_CONFIG_PATH]
+    [--configure-vm-orchestrator CONFIGURE_ARGUMENT_CONFIGURE_VM_ORCHESTRATOR]
+    [--configure-vm-name CONFIGURE_ARGUMENT_CONFIGURE_VM_NAME]
+    [--cloud-init-iso-output-path CONFIGURE_ARGUMENT_CLOUD_INIT_ISO_OUTPUT_PATH]
+    [--configure-vm-log-path CONFIGURE_ARGUMENT_CONFIGURE_VM_LOG_PATH]
+    [--configure-vm-template-path CONFIGURE_ARGUMENT_CONFIGURE_VM_TEMPLATE_PATH]
+    [--configure-vm-template-values KEY=VALUE]
+    [--reset-operations CONFIGURE_ARGUMENT_RESET_OPERATIONS]
+    [--verbose]
+    [--verbose-reset]
+    image_path
 
     options:
     -h, --help            show this help message and exit
-    --image-format IMAGE_FORMAT
-                            The format of the image that is to be configured. 
-                            The tool tries to automatically discover this if not set. (default: None)
-    --config-user-data-path CONFIG_USER_DATA_PATH
-                            The path to the cloud-init user-data configuration file. (default: cloud-init/user-data)
-    --config-meta-data-path CONFIG_META_DATA_PATH
-                            The path to the cloud-init meta-data configuration file. (default: cloud-init/meta-data)
-    --config-vendor-data-path CONFIG_VENDOR_DATA_PATH
-                            The path to the cloud-init vendor-data configuration file. (default: cloud-init/vendor-data)
-    --config-network-config-path CONFIG_NETWORK_CONFIG_PATH
+    --version, -V         Print the version of the program
+
+    Configure Virtual Machine Image:
+    image_path            The path to the image that is to be configured.
+    --image-format CONFIGURE_ARGUMENT_IMAGE_FORMAT
+                            The format of the image that is to be configured. The tool tries to automatically discover this if not set.
+                            (default: None)
+    --config-user-data-path CONFIGURE_ARGUMENT_USER_DATA_PATH
+                            The path to the cloud-init user-data configuration file.
+                            (default: cloud-init/user-data)
+    --config-meta-data-path CONFIGURE_ARGUMENT_META_DATA_PATH
+                            The path to the cloud-init meta-data configuration file.
+                            (default: cloud-init/meta-data)
+    --config-vendor-data-path CONFIGURE_ARGUMENT_VENDOR_DATA_PATH
+                            The path to the cloud-init vendor-data configuration file.
+                            (default: cloud-init/vendor-data)
+    --config-network-config-path CONFIGURE_ARGUMENT_NETWORK_CONFIG_PATH
                             The path to the cloud-init network-config configuration file that is used to configure the network settings of the image.
                             (default: cloud-init/network-config)
-    --cloud-init-iso-output-path CLOUD_INIT_ISO_OUTPUT_PATH, -ci-output CLOUD_INIT_ISO_OUTPUT_PATH
-                            The path to the cloud-init output ISO image file that is generated based 
-                            on the data defined in the user-data, meta-data, vendor-data, and network-config files.
-                            This seed ISO is then subsequently used to configure the defined input image. (default: cloud-init/cidata.iso)
-    --configure-vm-log-path CONFIGURE_VM_LOG_PATH, -cv-log CONFIGURE_VM_LOG_PATH
-                            The path to the log file that is used to log the output of the configuring VM. (default: tmp/configure-vm.log)
-    --configure-vm-template-path CONFIGURE_VM_TEMPLATE_PATH
-                            The path to the template file that is used to configure the VM. (default: res/configure-vm-template.xml.j2)
-    --configure-vm-template-values KEY=VALUE [KEY=VALUE ...], -tv KEY=VALUE [KEY=VALUE ...]
-                            An additional set of key=value pair arguments that should be passed to the --configure-vm-template.
-                            If a value contains spaces, you should define it with quotes. (default: [])
-    --reset-operations RESET_OPERATIONS
-                            The operations to perform during the reset operation. (default: defaults,-ssh-userdir)
-    --verbose, -v         Flag to enable verbose output (default: False)
+    --configure-vm-orchestrator CONFIGURE_ARGUMENT_CONFIGURE_VM_ORCHESTRATOR, -cv-orch CONFIGURE_ARGUMENT_CONFIGURE_VM_ORCHESTRATOR
+                            The orchestrator to use when provisioning the virtual machine that is used to configure a particular virtual machine image.
+                            (default: libvirt-provider)
+    --configure-vm-name CONFIGURE_ARGUMENT_CONFIGURE_VM_NAME, -cv-name CONFIGURE_ARGUMENT_CONFIGURE_VM_NAME
+                            The name of the VM that is used to configure the image.
+                            (default: configure-vm-image)
+    --cloud-init-iso-output-path CONFIGURE_ARGUMENT_CLOUD_INIT_ISO_OUTPUT_PATH, -ci-output CONFIGURE_ARGUMENT_CLOUD_INIT_ISO_OUTPUT_PATH
+                            The path to the cloud-init output iso image file that is generated based on the data defined in the user-data, meta-data, vendor-data, and network-config files. This seed iso file is then subsequently used to configure the defined input image.
+                            (default: cloud-init/cidata.iso)
+    --configure-vm-log-path CONFIGURE_ARGUMENT_CONFIGURE_VM_LOG_PATH, -cv-log CONFIGURE_ARGUMENT_CONFIGURE_VM_LOG_PATH
+                            The path to the log file that is used to log the output of the configuring VM.
+                            (default: tmp/configure-vm.log)
+    --configure-vm-template-path CONFIGURE_ARGUMENT_CONFIGURE_VM_TEMPLATE_PATH, -cv-tp CONFIGURE_ARGUMENT_CONFIGURE_VM_TEMPLATE_PATH
+                            The path to the template file that is used to configure the VM.
+                            (default: res/configure-vm-template.xml.j2)
+    --configure-vm-template-values KEY=VALUE, -cv-tv KEY=VALUE
+                            An additional set of comma seperated key=value pair arguments that should be passed to the --configure-vm-template-path. If a value contains spaces, you should define it with quotes.
+                            (default: [])
+    --reset-operations CONFIGURE_ARGUMENT_RESET_OPERATIONS, -ro CONFIGURE_ARGUMENT_RESET_OPERATIONS
+                            The operations to perform during the reset operation.
+                            (default: defaults,-ssh-userdir)
+    --verbose, -v         Flag to enable verbose output. (default: False)
+    --verbose-reset, -vr  Flag to enable verbose output during the reset. (default: False)
 
 As can be gathered from the help output, ``configure-vm-image`` expects that each of these `cloud-init <https://cloudinit.readthedocs.io/en/latest/index.html>`_ configuration files are present in a ``cloud-init`` directory in the current path when ``configure-vm-image`` is executed.
 If any of these configuration files are not present, the tool will skip that particular configuration file and continue on even if none are given.
