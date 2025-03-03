@@ -1,6 +1,14 @@
 import os
 import time
-from configure_vm_image.common.defaults import CLOUD_INIT_DIR, TMP_DIR, RES_DIR
+from configure_vm_image.common.defaults import (
+    CLOUD_INIT_DIR,
+    TMP_DIR,
+    RES_DIR,
+    CONFIGURE_VM_VCPUS,
+    CONFIGURE_VM_MEMORY,
+    CONFIGURE_VM_MACHINE,
+    CPU_ARCHITECTURE,
+)
 from configure_vm_image.common.codes import (
     SUCCESS,
     CONFIGURE_IMAGE_ERROR,
@@ -412,9 +420,20 @@ async def configure_vm_image(
 
     # Ensure that the required template values are set for the cloud-init iso image
     # and for the VM log file that is monitored to tell when the configuration process is finished
+    if "num_vcpus" not in configure_vm_template_values:
+        configure_vm_template_values.append(f"num_vcpus={CONFIGURE_VM_VCPUS}")
+    if "memory_size" not in configure_vm_template_values:
+        configure_vm_template_values.append(f"memory_size={CONFIGURE_VM_MEMORY}")
+    if "cpu_architecture" not in configure_vm_template_values:
+        configure_vm_template_values.append(f"cpu_architecture={CPU_ARCHITECTURE}")
+    if "machine" not in configure_vm_template_values:
+        configure_vm_template_values.append(f"machine={CONFIGURE_VM_MACHINE}")
     if "cd_iso_path" not in configure_vm_template_values:
         configure_vm_template_values.append(f"cd_iso_path={cloud_init_iso_output_path}")
-    if "configure_vm_log_path" not in configure_vm_template_values:
+    if (
+        "configure_vm_log_path" not in configure_vm_template_values
+        and "log_file_path" not in configure_vm_template_values
+    ):
         configure_vm_template_values.append(f"log_file_path={configure_vm_log_path}")
 
     configured_id, configured_msg = await configure_image(

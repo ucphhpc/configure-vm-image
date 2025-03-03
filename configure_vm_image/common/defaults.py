@@ -1,4 +1,5 @@
 import os
+import platform
 
 PACKAGE_NAME = "configure-vm-image"
 REPO_NAME = "configure-vm-image"
@@ -12,3 +13,8 @@ VM_DISK_DIR = "vmdisks"
 TMP_DIR = "tmp"
 RES_DIR = "res"
 CONFIGURE_ARGUMENT = "configure_argument"
+
+CONFIGURE_VM_VCPUS = "1"
+CONFIGURE_VM_MEMORY = "1024MiB"
+CONFIGURE_VM_MACHINE = "pc"
+CPU_ARCHITECTURE = platform.machine()

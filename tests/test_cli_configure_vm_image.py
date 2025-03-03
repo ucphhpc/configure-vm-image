@@ -3,13 +3,13 @@ import os
 import random
 from configure_vm_image.utils.io import exists, join, copy, remove
 from configure_vm_image.cli.configure_image import main
-from configure_vm_image.common.codes import SUCCESS
-from .common import (
+from configure_vm_image.common.defaults import (
     CPU_ARCHITECTURE,
     CONFIGURE_VM_MACHINE,
     CONFIGURE_VM_MEMORY,
     CONFIGURE_VM_VCPUS,
 )
+from configure_vm_image.common.codes import SUCCESS
 from .context import AsyncConfigureTestContext
 
 
@@ -56,7 +56,26 @@ class TestCLIConfigurer(unittest.IsolatedAsyncioTestCase):
     def tearDownClass(cls):
         cls.context.tearDown()
 
-    def test_configurer_cli(self):
+    def test_configurer_cli_with_default_template(self):
+        args = [
+            self.image_to_configure,
+            "--config-user-data-path",
+            join(self.cloud_init_directory, "user-data"),
+            "--config-network-config-path",
+            join(self.cloud_init_directory, "network-config"),
+            "--cloud-init-iso-output-path",
+            join(self.cloud_init_output_directory, f"{self.seed}-cidata.iso"),
+            "--configure-vm-name",
+            self.configure_vm_name,
+            "--configure-vm-log-path",
+            self.configure_vm_log_path,
+            "--configure-vm-template-path",
+            self.context.image_template_config,
+        ]
+        return_code = cli_action(*args)
+        self.assertEqual(return_code, SUCCESS)
+
+    def test_configurer_cli_with_set_template_values(self):
         configure_vm_template_values = ",".join(
             [
                 f"memory_size={CONFIGURE_VM_MEMORY}",
