@@ -291,7 +291,6 @@ async def configure_vm_image(
     configure_vm_template_values=None,
     reset_operations="defaults,-ssh-userdir",
     verbose=False,
-    verbose_reset=False,
 ):
     response = {}
     verbose_outputs = []
@@ -482,7 +481,7 @@ async def configure_vm_image(
         )
 
     reset_success, reset_results = reset_image(
-        image_path, reset_operations=reset_operations, verbose=verbose_reset
+        image_path, reset_operations=reset_operations, verbose=verbose
     )
     if verbose:
         verbose_outputs.append(reset_results)

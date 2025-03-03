@@ -116,11 +116,3 @@ def configure_group(parser):
         default=False,
         help="Flag to enable verbose output.",
     )
-    configure_group_.add_argument(
-        "--verbose-reset",
-        "-vr",
-        dest="{}_verbose_reset".format(CONFIGURE_ARGUMENT),
-        action="store_true",
-        default=False,
-        help="Flag to enable verbose output during the reset.",
-    )

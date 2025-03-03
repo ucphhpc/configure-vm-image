@@ -68,7 +68,6 @@ class AsyncTestImageConfiguration(unittest.IsolatedAsyncioTestCase):
             configure_vm_template_path=self.context.image_template_config,
             configure_vm_template_values=configure_vm_template_values,
             verbose=True,
-            verbose_reset=True,
         )
         self.assertEqual(return_code, SUCCESS)
         self.assertIsNotNone(msg)

@@ -4,20 +4,16 @@ from configure_vm_image.common.defaults import (
     TMP_DIR,
     RES_DIR,
 )
-from configure_vm_image.common.codes import SUCCESS
-from configure_vm_image.cli.configure_image import (
-    add_configure_vm_image_cli_arguments,
-)
-from configure_vm_image.cli.configure_image import configure_vm_image
+from configure_vm_image.cli.parsers.configure import configure_group
+from configure_vm_image.configure import configure_vm_image
 from configure_vm_image.common.utils import expand_path
 
 
 def configure_vm_image_cli(commands):
     parser = commands.add_parser(
         "configure-vm",
-        help="Build the images defined in an architecture file.",
     )
-    add_configure_vm_image_cli_arguments(parser)
+    configure_group(parser)
     parser.set_defaults(func=corc_configure_vm_cli_exec)
 
 
@@ -50,9 +46,8 @@ def corc_configure_vm_cli_exec(args):
     configure_vm_template_values = args.get("configure_vm_template_values", [])
     reset_operations = args.get("reset_operations", "defaults,-ssh-userdir")
     verbose = args.get("verbose", False)
-    verbose_reset = args.get("verbose_reset", False)
 
-    return_code, result_dict = await configure_vm_image(
+    return configure_vm_image(
         expand_path(image_path),
         image_format=image_format,
         user_data_path=expand_path(config_user_data_path),
@@ -66,9 +61,4 @@ def corc_configure_vm_cli_exec(args):
         configure_vm_template_values=configure_vm_template_values,
         reset_operations=reset_operations,
         verbose=verbose,
-        verbose_reset=verbose_reset,
     )
-
-    if return_code == SUCCESS:
-        return True, result_dict
-    return False, result_dict
