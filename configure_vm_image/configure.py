@@ -134,7 +134,7 @@ def discover_vm_orchestrator():
     return orchestrator
 
 
-async def configure_vm(name, image, *template_args, **kwargs):
+async def configure_vm(name, image, template_path=None, **kwargs):
     """This launches a subprocess that configures the VM image on boot."""
     vm_orchestrator = discover_vm_orchestrator()
     # TODO discover the specific vm orchestrator argument structure
@@ -144,13 +144,13 @@ async def configure_vm(name, image, *template_args, **kwargs):
         "create",
         name,
         image,
-        "--extra-template-path-values",
-        *template_args,
     ]
-    for key, value in kwargs.items():
-        if value:
-            configure_key = "--{}".format(key).replace("_", "-")
-            create_command.extend([configure_key, value])
+    if template_path:
+        create_command.extend(["--template-path", template_path])
+        create_command.extend(["--extra-template-path-values"])
+        create_command.append(
+            ",".join([f"{key}={value}" for key, value in kwargs.items()])
+        )
 
     create_success, create_result = run(create_command, output_format="json")
     if not create_success:
@@ -190,11 +190,9 @@ async def configure_vm(name, image, *template_args, **kwargs):
     return instance_id, start_result["output"]
 
 
-async def configure_image(name, image, *template_args, **configure_kwargs):
+async def configure_image(name, image, **kwargs):
     """Configures the image using the configuration path"""
-    configure_result, configure_msg = await configure_vm(
-        name, image, *template_args, **configure_kwargs
-    )
+    configure_result, configure_msg = await configure_vm(name, image, **kwargs)
     if not configure_result:
         return False, configure_msg
     return configure_result, configure_msg
@@ -304,7 +302,7 @@ async def configure_vm_image(
     verbose_outputs = []
 
     if not configure_vm_template_values:
-        configure_vm_template_values = []
+        configure_vm_template_values = {}
 
     # Ensure that the image to configure exists
     if not exists(image_path):
@@ -418,29 +416,31 @@ async def configure_vm_image(
             f"Using the VM template description: {configure_vm_template_path}"
         )
 
+    # TODO, these does not validate the template values correctly
     # Ensure that the required template values are set for the cloud-init iso image
     # and for the VM log file that is monitored to tell when the configuration process is finished
     if "num_vcpus" not in configure_vm_template_values:
-        configure_vm_template_values.append(f"num_vcpus={CONFIGURE_VM_VCPUS}")
+        configure_vm_template_values["num_vcpus"] = CONFIGURE_VM_VCPUS
     if "memory_size" not in configure_vm_template_values:
-        configure_vm_template_values.append(f"memory_size={CONFIGURE_VM_MEMORY}")
+        configure_vm_template_values["memory_size"] = CONFIGURE_VM_MEMORY
     if "cpu_architecture" not in configure_vm_template_values:
-        configure_vm_template_values.append(f"cpu_architecture={CPU_ARCHITECTURE}")
+        configure_vm_template_values["cpu_architecture"] = CPU_ARCHITECTURE
     if "machine" not in configure_vm_template_values:
-        configure_vm_template_values.append(f"machine={CONFIGURE_VM_MACHINE}")
+        configure_vm_template_values["machine"] = CONFIGURE_VM_MACHINE
     if "cd_iso_path" not in configure_vm_template_values:
-        configure_vm_template_values.append(f"cd_iso_path={cloud_init_iso_output_path}")
+        configure_vm_template_values["cd_iso_path"] = cloud_init_iso_output_path
     if (
         "configure_vm_log_path" not in configure_vm_template_values
         and "log_file_path" not in configure_vm_template_values
     ):
-        configure_vm_template_values.append(f"log_file_path={configure_vm_log_path}")
+        configure_vm_template_values["log_file_path"] = configure_vm_log_path
 
+    print("Configure vm template values: {}".format(configure_vm_template_values))
     configured_id, configured_msg = await configure_image(
         configure_vm_name,
         image_path,
-        *configure_vm_template_values,
         template_path=configure_vm_template_path,
+        **configure_vm_template_values,
     )
     if verbose:
         verbose_outputs.append(configured_msg)

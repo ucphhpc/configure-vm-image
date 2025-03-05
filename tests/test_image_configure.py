@@ -65,12 +65,12 @@ class AsyncTestImageConfiguration(unittest.IsolatedAsyncioTestCase):
         self.assertIsNotNone(msg)
 
     async def test_basic_configure_with_template_values(self):
-        configure_vm_template_values = [
-            f"memory_size={CONFIGURE_VM_MEMORY}",
-            f"num_vcpus={CONFIGURE_VM_VCPUS}",
-            f"cpu_architecture={CPU_ARCHITECTURE}",
-            f"machine={CONFIGURE_VM_MACHINE}",
-        ]
+        configure_vm_template_values = {
+            "memory_size": CONFIGURE_VM_MEMORY,
+            "num_vcpus": CONFIGURE_VM_VCPUS,
+            "cpu_architecture": CPU_ARCHITECTURE,
+            "machine": CONFIGURE_VM_MACHINE,
+        }
 
         return_code, msg = await configure_vm_image(
             self.image_to_configure,

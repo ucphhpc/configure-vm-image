@@ -19,4 +19,8 @@ class PositionalArgumentsAction(argparse.Action):
 class KeyValueAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         key_value_list = values.split(",")
-        setattr(namespace, self.dest, key_value_list)
+        key_value_dict = {
+            key_value.split("=")[0]: key_value.split("=")[1]
+            for key_value in key_value_list
+        }
+        setattr(namespace, self.dest, key_value_dict)

@@ -96,8 +96,8 @@ def configure_group(parser):
         dest="{}_configure_vm_template_values".format(CONFIGURE_ARGUMENT),
         metavar="KEY=VALUE",
         action=KeyValueAction,
-        default=[],
-        help="""An additional set of comma seperated key=value pair arguments that should be passed to the --configure-vm-template-path.
+        default="",
+        help="""An additional set of comma seperated KEY=VALUE pair arguments that should be passed to the --configure-vm-template-path.
         If a value contains spaces, you should define it with quotes.
         """,
     )

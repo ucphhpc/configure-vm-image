@@ -43,7 +43,7 @@ def corc_configure_vm_cli_exec(args):
         "configure_vm_template_path",
         os.path.join(RES_DIR, "configure-vm-template.xml.j2"),
     )
-    configure_vm_template_values = args.get("configure_vm_template_values", [])
+    configure_vm_template_values = args.get("configure_vm_template_values", {})
     reset_operations = args.get("reset_operations", "defaults,-ssh-userdir")
     verbose = args.get("verbose", False)
 
