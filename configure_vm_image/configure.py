@@ -435,7 +435,6 @@ async def configure_vm_image(
     ):
         configure_vm_template_values["log_file_path"] = configure_vm_log_path
 
-    print("Configure vm template values: {}".format(configure_vm_template_values))
     configured_id, configured_msg = await configure_image(
         configure_vm_name,
         image_path,
