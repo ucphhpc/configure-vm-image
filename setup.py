@@ -32,7 +32,7 @@ setup(
     author="Rasmus Munk",
     author_email="code@munk0.dk",
     packages=find_packages(),
-    url="https://github.com/rasmunk/configure-vm-image",
+    url="https://github.com/ucphhpc/configure-vm-image",
     license="MIT",
     keywords=["Virtual Machine", "VM", "Images"],
     install_requires=read_req("requirements.txt"),
