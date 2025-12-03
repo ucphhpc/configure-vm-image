@@ -30,7 +30,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/x-rst",
     author="Rasmus Munk",
-    author_email="munk1@live.dk",
+    author_email="code@munk0.dk",
     packages=find_packages(),
     url="https://github.com/rasmunk/configure-vm-image",
     license="MIT",
