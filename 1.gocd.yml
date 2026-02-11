@@ -26,6 +26,8 @@ pipelines:
         destination: publish-python-scripts
     parameters:
       ARGS: ''
+      BUILD_MAKE_ARGS: ''
+      TEST_MAKE_ARGS: ''
       SRC_DIRECTORY: configure-vm-image
       TEST_DIRECTORY: configure-vm-image
       PUSH_DIRECTORY: publish-python-scripts
