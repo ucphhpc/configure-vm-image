@@ -26,9 +26,11 @@ pipelines:
         destination: publish-python-scripts
     parameters:
       ARGS: ''
-      BUILD_MAKE_ARGS: ''
-      TEST_MAKE_ARGS: ''
       SRC_DIRECTORY: configure-vm-image
+      BUILD_MAKE_TARGET: all
+      BUILD_MAKE_ARGS: ''
       TEST_DIRECTORY: configure-vm-image
+      TEST_MAKE_TARGET: test
+      TEST_MAKE_ARGS: ''
       PUSH_DIRECTORY: publish-python-scripts
     template: bare_metal_pypi_package
