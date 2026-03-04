@@ -19,3 +19,15 @@ def to_str(o):
 
 def expand_path(path):
     return os.path.realpath(os.path.expanduser(path))
+
+
+def transform_str_to_dict(
+    string, string_split_on_char=",", key_value_split_on_char="="
+):
+    _dict = {
+        key_value.split(key_value_split_on_char)[0]: key_value.split(
+            key_value_split_on_char
+        )[1]
+        for key_value in string.split(string_split_on_char)
+    }
+    return _dict

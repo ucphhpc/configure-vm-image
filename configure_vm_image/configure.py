@@ -9,6 +9,7 @@ from configure_vm_image.common.defaults import (
     CONFIGURE_VM_MEMORY,
     CONFIGURE_VM_MACHINE,
     CPU_ARCHITECTURE,
+    VM_ORCHESTRATOR_LIBVIRT_PROVIDER,
 )
 from configure_vm_image.common.codes import (
     SUCCESS,
@@ -21,6 +22,7 @@ from configure_vm_image.common.codes import (
     RESET_IMAGE_ERROR,
     RESET_IMAGE_ERROR_MSG,
 )
+from configure_vm_image.common.utils import transform_str_to_dict
 from configure_vm_image.utils.job import run
 from configure_vm_image.utils.io import exists, which, load, makedirs
 
@@ -122,10 +124,11 @@ def generate_image_configuration(
     )
 
 
-def discover_vm_orchestrator():
+def discover_vm_orchestrator(orchestrator=None):
     """Discovers the vm orchestrator command line tool on the system"""
-    # TODO, accept the orchestrator as an argument to be dynamically discovered
-    orchestrator = "libvirt-provider"
+    if orchestrator is None:
+        orchestrator = VM_ORCHESTRATOR_LIBVIRT_PROVIDER
+
     if not which(orchestrator):
         raise FileNotFoundError(
             "Failed to find the {} command on the system. Please ensure that it is installed".format(
@@ -135,22 +138,46 @@ def discover_vm_orchestrator():
     return orchestrator
 
 
-async def configure_vm(name, image, template_path=None, **kwargs):
+def prepare_vm_orchestrator_args(
+    orchestrator, orchestrator_args=None, vm_orchestrator_kwargs=None
+):
+    prepared_orchestrator_args = []
+    if orchestrator == VM_ORCHESTRATOR_LIBVIRT_PROVIDER:
+        prepared_orchestrator_args.extend(["instance", "create"])
+        if orchestrator_args is not None and isinstance(orchestrator_args, list):
+            prepared_orchestrator_args.extend(orchestrator_args)
+
+        if vm_orchestrator_kwargs is not None and isinstance(
+            vm_orchestrator_kwargs, dict
+        ):
+            for key, value in vm_orchestrator_kwargs.items():
+                if key:
+                    prepared_key = "--{}".format(key)
+                if key and value:
+                    prepared_orchestrator_args.extend([prepared_key, value])
+                elif key and not value:
+                    prepared_orchestrator_args.append(prepared_key)
+                elif value and not key:
+                    prepared_orchestrator_args.append(value)
+    return prepared_orchestrator_args
+
+
+async def configure_vm(
+    vm_orchestrator, vm_orchestrator_args=None, template_path=None, template_kwargs=None
+):
     """This launches a subprocess that configures the VM image on boot."""
-    vm_orchestrator = discover_vm_orchestrator()
-    # TODO discover the specific vm orchestrator argument structure
-    create_command = [
-        vm_orchestrator,
-        "instance",
-        "create",
-        name,
-        image,
-    ]
-    if template_path:
+    create_command = [vm_orchestrator]
+
+    if vm_orchestrator_args and isinstance(vm_orchestrator_args, list):
+        create_command.extend(vm_orchestrator_args)
+
+    if template_path is not None and isinstance(template_path, str):
         create_command.extend(["--template-path", template_path])
+
+    if template_kwargs is not None and isinstance(template_kwargs, dict):
         create_command.extend(["--extra-template-path-values"])
         create_command.append(
-            ",".join([f"{key}={value}" for key, value in kwargs.items()])
+            ",".join([f"{key}={value}" for key, value in template_kwargs.items()])
         )
 
     create_success, create_result = run(create_command, output_format="json")
@@ -191,9 +218,9 @@ async def configure_vm(name, image, template_path=None, **kwargs):
     return instance_id, start_result["output"]
 
 
-async def configure_image(name, image, **kwargs):
+async def configure_image(vm_orchestrator, **kwargs):
     """Configures the image using the configuration path"""
-    configure_result, configure_msg = await configure_vm(name, image, **kwargs)
+    configure_result, configure_msg = await configure_vm(vm_orchestrator, **kwargs)
     if not configure_result:
         return False, configure_msg
     return configure_result, configure_msg
@@ -291,11 +318,11 @@ async def configure_vm_image(
     vendor_data_path=join(CLOUD_INIT_DIR, "vendor-data"),
     network_config_path=join(CLOUD_INIT_DIR, "network-config"),
     cloud_init_iso_output_path=join(CLOUD_INIT_DIR, "cidata.iso"),
-    configure_vm_orchestrator="libvirt-provider",
     configure_vm_name="configure-vm-image",
     configure_vm_log_path=join(TMP_DIR, "configure-vm.log"),
     configure_vm_template_path=join(RES_DIR, "configure-vm-template.xml.j2"),
     configure_vm_template_values=None,
+    configure_vm_orchestrator=VM_ORCHESTRATOR_LIBVIRT_PROVIDER,
     reset_operations="defaults,-ssh-userdir",
     verbose=False,
 ):
@@ -328,8 +355,13 @@ async def configure_vm_image(
         )
         response["verbose_outputs"] = verbose_outputs
 
-    if not configure_vm_template_values:
+    if configure_vm_template_values is None:
         configure_vm_template_values = {}
+
+    if isinstance(configure_vm_template_values, str):
+        configure_vm_template_values = transform_str_to_dict(
+            configure_vm_template_values
+        )
 
     # Ensure that the image to configure exists
     if not exists(image_path):
@@ -443,7 +475,7 @@ async def configure_vm_image(
             f"Using the VM template description: {configure_vm_template_path}"
         )
 
-    # TODO, these does not validate the template values correctly
+    # TODO, these do not validate the template values correctly
     # Ensure that the required template values are set for the cloud-init iso image
     # and for the VM log file that is monitored to tell when the configuration process is finished
     if "num_vcpus" not in configure_vm_template_values:
@@ -456,17 +488,21 @@ async def configure_vm_image(
         configure_vm_template_values["machine"] = CONFIGURE_VM_MACHINE
     if "cd_iso_path" not in configure_vm_template_values:
         configure_vm_template_values["cd_iso_path"] = cloud_init_iso_output_path
-    if (
-        "configure_vm_log_path" not in configure_vm_template_values
-        and "log_file_path" not in configure_vm_template_values
-    ):
-        configure_vm_template_values["log_file_path"] = configure_vm_log_path
+    if "configure_vm_log_path" not in configure_vm_template_values:
+        configure_vm_template_values["configure_vm_log_path"] = configure_vm_log_path
+
+    # Prepare the orchestrator
+    vm_orchestrator = discover_vm_orchestrator(orchestrator=configure_vm_orchestrator)
+
+    vm_orchestrator_args = prepare_vm_orchestrator_args(
+        vm_orchestrator, orchestrator_args=[configure_vm_name, image_path]
+    )
 
     configured_id, configured_msg = await configure_image(
-        configure_vm_name,
-        image_path,
+        vm_orchestrator,
+        vm_orchestrator_args=vm_orchestrator_args,
         template_path=configure_vm_template_path,
-        **configure_vm_template_values,
+        template_kwargs=configure_vm_template_values,
     )
     if verbose:
         verbose_outputs.append(configured_msg)
