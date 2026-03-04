@@ -1,5 +1,6 @@
 import os
 import time
+from os.path import join, realpath
 from configure_vm_image.common.defaults import (
     CLOUD_INIT_DIR,
     TMP_DIR,
@@ -285,21 +286,47 @@ def reset_image(image, reset_operations=None, verbose=False):
 async def configure_vm_image(
     image_path,
     image_format=None,
-    user_data_path=os.path.join(CLOUD_INIT_DIR, "user-data"),
-    meta_data_path=os.path.join(CLOUD_INIT_DIR, "meta-data"),
-    vendor_data_path=os.path.join(CLOUD_INIT_DIR, "vendor-data"),
-    network_config_path=os.path.join(CLOUD_INIT_DIR, "network-config"),
-    cloud_init_iso_output_path=os.path.join(CLOUD_INIT_DIR, "cidata.iso"),
+    user_data_path=join(CLOUD_INIT_DIR, "user-data"),
+    meta_data_path=join(CLOUD_INIT_DIR, "meta-data"),
+    vendor_data_path=join(CLOUD_INIT_DIR, "vendor-data"),
+    network_config_path=join(CLOUD_INIT_DIR, "network-config"),
+    cloud_init_iso_output_path=join(CLOUD_INIT_DIR, "cidata.iso"),
     configure_vm_orchestrator="libvirt-provider",
     configure_vm_name="configure-vm-image",
-    configure_vm_log_path=os.path.join(TMP_DIR, "configure-vm.log"),
-    configure_vm_template_path=os.path.join(RES_DIR, "configure-vm-template.xml.j2"),
+    configure_vm_log_path=join(TMP_DIR, "configure-vm.log"),
+    configure_vm_template_path=join(RES_DIR, "configure-vm-template.xml.j2"),
     configure_vm_template_values=None,
     reset_operations="defaults,-ssh-userdir",
     verbose=False,
 ):
     response = {}
     verbose_outputs = []
+
+    # Expand the paths to their absolutes
+    user_data_path = realpath(user_data_path)
+    meta_data_path = realpath(meta_data_path)
+    vendor_data_path = realpath(vendor_data_path)
+    network_config_path = realpath(network_config_path)
+    cloud_init_iso_output_path = realpath(cloud_init_iso_output_path)
+    configure_vm_log_path = realpath(configure_vm_log_path)
+    configure_vm_template_path = realpath(configure_vm_template_path)
+
+    if verbose:
+        verbose_outputs.extend(
+            [
+                "Using the following paths to configure the given image"
+                "Cloud-init data configuration path: {}".format(user_data_path),
+                "Cloud-init meta data configuration path: {}".format(meta_data_path),
+                "Cloud-init vendor data configuration path: {}".format(
+                    vendor_data_path
+                ),
+                "Cloud-init network configuration path: {}".format(network_config_path),
+                "Cloud-init output iso path: {}".format(cloud_init_iso_output_path),
+                "Configure VM log path: {}".format(configure_vm_log_path),
+                "Configure VM template path: {}".format(configure_vm_template_path),
+            ]
+        )
+        response["verbose_outputs"] = verbose_outputs
 
     if not configure_vm_template_values:
         configure_vm_template_values = {}
