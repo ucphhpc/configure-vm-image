@@ -3,12 +3,7 @@ import os
 import random
 from configure_vm_image.configure import configure_vm_image
 from configure_vm_image.utils.io import join, copy, exists, remove
-from configure_vm_image.common.defaults import (
-    CPU_ARCHITECTURE,
-    CONFIGURE_VM_MACHINE,
-    CONFIGURE_VM_MEMORY,
-    CONFIGURE_VM_VCPUS,
-)
+from configure_vm_image.common.defaults import CPU_ARCHITECTURE, CONFIGURE_VM_MACHINE
 from configure_vm_image.common.codes import SUCCESS
 from .context import AsyncConfigureTestContext
 
@@ -66,8 +61,8 @@ class AsyncTestImageConfiguration(unittest.IsolatedAsyncioTestCase):
 
     async def test_basic_configure_with_template_values(self):
         configure_vm_template_values = {
-            "memory_size": CONFIGURE_VM_MEMORY,
-            "num_vcpus": CONFIGURE_VM_VCPUS,
+            "memory_size": self.context.test_memory_size,
+            "num_vcpus": self.context.test_num_cpus,
             "cpu_architecture": CPU_ARCHITECTURE,
             "machine": CONFIGURE_VM_MACHINE,
         }

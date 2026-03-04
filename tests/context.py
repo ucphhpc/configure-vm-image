@@ -1,4 +1,5 @@
 import os
+import psutil
 from gen_vm_image.common.codes import SUCCESS
 from gen_vm_image.image import generate_image
 from gen_vm_image.utils.net import download_file
@@ -15,17 +16,48 @@ INPUT_IMAGE_URL = f"https://sid.erda.dk/share_redirect/B0AM7a5lpC/Rocky-9-Generi
 INPUT_IMAGE_CHECKSUM_URL = f"https://sid.erda.dk/share_redirect/B0AM7a5lpC/Rocky-9-GenericCloud-Base-{TEST_IMAGE_VERSION}.{CPU_ARCHITECTURE}.{TEST_IMAGE_FORMAT}.chksum.txt"
 
 
+_1024_MIB_IN_BYTES = 1073741824
+
+
+def get_memory_slice(available_memory_divisor=4, expected_units="mib"):
+    available_bytes = psutil.virtual_memory().available
+    memory_slice_in_bytes = int(available_bytes / available_memory_divisor)
+
+    if memory_slice_in_bytes < _1024_MIB_IN_BYTES:
+        # Don't use less than 1024MiB
+        memory_slice_in_bytes = _1024_MIB_IN_BYTES
+
+    # Transform to expected_units
+    if expected_units == "kib":
+        memory_slice = int(memory_slice_in_bytes / 1024)
+    elif expected_units == "mib":
+        memory_slice = int(memory_slice_in_bytes / (1024 * 1024))
+    elif expected_units == "gib":
+        memory_slice = int(memory_slice_in_bytes / (1024 * 1024 * 1024))
+    else:
+        raise ValueError(f"Unknown expected_units: {expected_units}")
+    return memory_slice
+
+
+def get_cpus_slice(core_count_divisor=2):
+    available_cpus = os.cpu_count()
+    cpus_slice = int(available_cpus / core_count_divisor)
+    if cpus_slice < 2:
+        cpus_slice = 2
+    return cpus_slice
+
+
 def extract_checksum_from_image_file(path):
     """Extract checksum, expects the format:
-            'checksum (of first xxxxx bytes) relative_serverside_path'
+        'checksum (of first xxxxx bytes) relative_serverside_path'
 
-        which will return the checksum and the byte size.
-        
-        Otherwise the function will expect that the entire file is used 
-        to calculate the checksum with the following format:
-            'checksum relative_serverside_path'
-        
-        Which will return the checksum and None.
+    which will return the checksum and the byte size.
+
+    Otherwise the function will expect that the entire file is used
+    to calculate the checksum with the following format:
+        'checksum relative_serverside_path'
+
+    Which will return the checksum and None.
     """
     content = load(path)
     if not content:
@@ -103,6 +135,17 @@ class AsyncConfigureTestContext:
             self.test_res_template_directory, TEST_IMAGE_TEMPLATE_CONFIG
         )
         assert exists(self.image_template_config)
+
+        self.test_num_cpus = str(get_cpus_slice())
+        memory_unit = "mib"
+        self.test_memory_size = "{}{}".format(
+            get_memory_slice(expected_units=memory_unit), memory_unit
+        )
+
+        # https://libguestfs.org/guestfs-internals.1.html
+        # if we don't set this, the libguestfs will attempt to write to /var/tmp/.guestfs-<UID>
+        # which we might not have write permissions to. Furthermore we should keep all test related data in the test_tmp_directory
+        os.environ["TMPDIR"] = self.test_tmp_directory
 
     # Should be used by the non async function tearDownClass to ensure that
     # the following cleanup is done before the class is destroyed
