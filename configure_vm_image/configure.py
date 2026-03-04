@@ -452,6 +452,14 @@ async def configure_vm_image(
 
     if verbose:
         verbose_outputs.append("Waiting for the configuration process to finish")
+
+    if not exists(configure_vm_log_path):
+        response["msg"] = PATH_NOT_FOUND_ERROR_MSG.format(
+            configure_vm_log_path,
+            "Failed to find the log file that is used for monitored the configuration process",
+        )
+        return PATH_NOT_FOUND_ERROR, response
+
     finished = finished_configure(configure_vm_log_path)
     if not finished:
         response["msg"] = "Failed to finish configuring the image"
