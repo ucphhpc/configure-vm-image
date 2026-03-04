@@ -16,13 +16,26 @@ INPUT_IMAGE_CHECKSUM_URL = f"https://sid.erda.dk/share_redirect/B0AM7a5lpC/Rocky
 
 
 def extract_checksum_from_image_file(path):
-    """Extract checksum, expects the format 'checksum (of first xxxxx bytes) relative_serverside_path'"""
+    """Extract checksum, expects the format:
+            'checksum (of first xxxxx bytes) relative_serverside_path'
+
+        which will return the checksum and the byte size.
+        
+        Otherwise the function will expect that the entire file is used 
+        to calculate the checksum with the following format:
+            'checksum relative_serverside_path'
+        
+        Which will return the checksum and None.
+    """
     content = load(path)
     if not content:
         return False
     split_content = content.split(" ")
     checksum = split_content[0]
-    checksum_byte_size = split_content[3]
+    if len(split_content) < 4:
+        checksum_byte_size = None
+    else:
+        checksum_byte_size = split_content[3]
     return checksum, checksum_byte_size
 
 
@@ -69,6 +82,9 @@ class AsyncConfigureTestContext:
             checksum, checksum_byte_size = extract_checksum_from_image_file(
                 checksum_file_path
             )
+            if checksum_byte_size is not None:
+                checksum_byte_size = int(checksum_byte_size)
+
             # Test that the image can be configured
             success, msg = await generate_image(
                 self.image_config["name"],
@@ -76,7 +92,7 @@ class AsyncConfigureTestContext:
                 input=self.image_config["input"],
                 input_checksum=checksum,
                 input_checksum_type="sha256",
-                input_checksum_read_bytes=int(checksum_byte_size),
+                input_checksum_read_bytes=checksum_byte_size,
                 output_directory=self.image_config["output_directory"],
                 output_format=self.image_config["output_format"],
             )
