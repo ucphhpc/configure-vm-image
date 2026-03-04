@@ -314,7 +314,7 @@ async def configure_vm_image(
     if verbose:
         verbose_outputs.extend(
             [
-                "Using the following paths to configure the given image"
+                "Using the following paths to configure the given image",
                 "Cloud-init data configuration path: {}".format(user_data_path),
                 "Cloud-init meta data configuration path: {}".format(meta_data_path),
                 "Cloud-init vendor data configuration path: {}".format(
