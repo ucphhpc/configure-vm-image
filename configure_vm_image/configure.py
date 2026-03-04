@@ -380,7 +380,7 @@ async def configure_vm_image(
         vendor_data_path=vendor_data_path,
         network_config_path=network_config_path,
     )
-    if verbose:
+    if verbose and generated_msg:
         verbose_outputs.append(generated_msg)
     if not generated_result:
         response["msg"] = generated_msg
