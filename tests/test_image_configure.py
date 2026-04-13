@@ -1,10 +1,12 @@
-import unittest
 import os
 import random
-from configure_vm_image.configure import configure_vm_image
-from configure_vm_image.utils.io import join, copy, exists, remove
-from configure_vm_image.common.defaults import CPU_ARCHITECTURE, CONFIGURE_VM_MACHINE
+import unittest
+
 from configure_vm_image.common.codes import SUCCESS
+from configure_vm_image.common.defaults import CONFIGURE_VM_MACHINE, CPU_ARCHITECTURE
+from configure_vm_image.configure import configure_vm_image
+from configure_vm_image.utils.io import copy, exists, join, remove
+
 from .context import AsyncConfigureTestContext
 
 

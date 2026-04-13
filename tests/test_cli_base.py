@@ -1,6 +1,7 @@
 import unittest
-from configure_vm_image.common.codes import SUCCESS
+
 from configure_vm_image.cli.configure_image import main
+from configure_vm_image.common.codes import SUCCESS
 
 
 class TestCLIBase(unittest.TestCase):

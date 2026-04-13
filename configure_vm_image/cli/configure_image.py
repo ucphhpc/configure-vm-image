@@ -1,20 +1,21 @@
-import asyncio
 import argparse
+import asyncio
 import inspect
-import sys
 import json
+import sys
+
 from configure_vm_image._version import __version__
-from configure_vm_image.common.defaults import CONFIGURE_ARGUMENT
-from configure_vm_image.common.utils import to_str, error_print
-from configure_vm_image.common.codes import (
-    SUCCESS,
-    JSON_DUMP_ERROR,
-    JSON_DUMP_ERROR_MSG,
-)
 from configure_vm_image.cli.helpers import (
     extract_arguments,
     strip_argument_group_prefix,
 )
+from configure_vm_image.common.codes import (
+    JSON_DUMP_ERROR,
+    JSON_DUMP_ERROR_MSG,
+    SUCCESS,
+)
+from configure_vm_image.common.defaults import CONFIGURE_ARGUMENT
+from configure_vm_image.common.utils import error_print, to_str
 
 SCRIPT_NAME = __file__
 

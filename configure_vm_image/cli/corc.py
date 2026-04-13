@@ -1,12 +1,13 @@
 import os
+
+from configure_vm_image.cli.parsers.configure import configure_group
 from configure_vm_image.common.defaults import (
     CLOUD_INIT_DIR,
-    TMP_DIR,
     RES_DIR,
+    TMP_DIR,
 )
-from configure_vm_image.cli.parsers.configure import configure_group
-from configure_vm_image.configure import configure_vm_image
 from configure_vm_image.common.utils import expand_path
+from configure_vm_image.configure import configure_vm_image
 
 
 def configure_vm_image_cli(commands):

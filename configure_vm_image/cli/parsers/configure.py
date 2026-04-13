@@ -1,18 +1,19 @@
 import os
+
+from configure_vm_image.cli.parsers.actions import (
+    KeyValueAction,
+    PositionalArgumentsAction,
+)
 from configure_vm_image.common.defaults import (
     CLOUD_INIT_DIR,
-    TMP_DIR,
-    RES_DIR,
     CONFIGURE_ARGUMENT,
-    VM_ORCHESTRATOR_LIBVIRT_PROVIDER,
-    CONFIGURE_VM_VCPUS,
-    CONFIGURE_VM_MEMORY,
     CONFIGURE_VM_MACHINE,
+    CONFIGURE_VM_MEMORY,
+    CONFIGURE_VM_VCPUS,
     CPU_ARCHITECTURE,
-)
-from configure_vm_image.cli.parsers.actions import (
-    PositionalArgumentsAction,
-    KeyValueAction,
+    RES_DIR,
+    TMP_DIR,
+    VM_ORCHESTRATOR_LIBVIRT_PROVIDER,
 )
 
 

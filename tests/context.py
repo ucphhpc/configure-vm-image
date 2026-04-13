@@ -1,11 +1,12 @@
 import os
+
 import psutil
 from gen_vm_image.common.codes import SUCCESS
 from gen_vm_image.image import generate_image
 from gen_vm_image.utils.net import download_file
-from configure_vm_image.utils.io import join, makedirs, remove, exists, load
-from configure_vm_image.common.defaults import CPU_ARCHITECTURE
 
+from configure_vm_image.common.defaults import CPU_ARCHITECTURE
+from configure_vm_image.utils.io import exists, join, load, makedirs, remove
 
 TEST_IMAGE_NAME = "test_image"
 TEST_IMAGE_FORMAT = "qcow2"

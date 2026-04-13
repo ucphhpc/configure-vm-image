@@ -1,18 +1,8 @@
 import os
 import time
 from os.path import join, realpath
-from configure_vm_image.common.defaults import (
-    CLOUD_INIT_DIR,
-    TMP_DIR,
-    RES_DIR,
-    CONFIGURE_VM_VCPUS,
-    CONFIGURE_VM_MEMORY,
-    CONFIGURE_VM_MACHINE,
-    CPU_ARCHITECTURE,
-    VM_ORCHESTRATOR_LIBVIRT_PROVIDER,
-)
+
 from configure_vm_image.common.codes import (
-    SUCCESS,
     CONFIGURE_IMAGE_ERROR,
     CONFIGURE_IMAGE_ERROR_MSG,
     PATH_CREATE_ERROR,
@@ -21,10 +11,21 @@ from configure_vm_image.common.codes import (
     PATH_NOT_FOUND_ERROR_MSG,
     RESET_IMAGE_ERROR,
     RESET_IMAGE_ERROR_MSG,
+    SUCCESS,
+)
+from configure_vm_image.common.defaults import (
+    CLOUD_INIT_DIR,
+    CONFIGURE_VM_MACHINE,
+    CONFIGURE_VM_MEMORY,
+    CONFIGURE_VM_VCPUS,
+    CPU_ARCHITECTURE,
+    RES_DIR,
+    TMP_DIR,
+    VM_ORCHESTRATOR_LIBVIRT_PROVIDER,
 )
 from configure_vm_image.common.utils import transform_str_to_dict
+from configure_vm_image.utils.io import exists, load, makedirs, which
 from configure_vm_image.utils.job import run
-from configure_vm_image.utils.io import exists, which, load, makedirs
 
 
 def discover_create_iso_command():

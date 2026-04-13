@@ -1,6 +1,6 @@
 import os
-import shutil
 import re
+import shutil
 
 
 def makedirs(path):

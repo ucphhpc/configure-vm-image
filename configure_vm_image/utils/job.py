@@ -1,6 +1,6 @@
+import datetime
 import json
 import subprocess
-import datetime
 
 
 def __to_str__(o):

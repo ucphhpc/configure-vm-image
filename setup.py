@@ -1,7 +1,8 @@
 #!/usr/bin/python
 # coding: utf-8
 import os
-from setuptools import setup, find_packages
+
+from setuptools import find_packages, setup
 
 cur_dir = os.path.abspath(os.path.dirname(__file__))
 
