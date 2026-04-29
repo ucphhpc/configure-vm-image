@@ -33,6 +33,9 @@ setup(
     author="Rasmus Munk",
     author_email="code@munk0.dk",
     packages=find_packages(),
+    data_files=[
+        ("etc/configure-vm-image/res", ["res/configure-vm-template.xml.j2"]),
+    ],
     url="https://github.com/ucphhpc/configure-vm-image",
     license="MIT",
     keywords=["Virtual Machine", "VM", "Images"],
