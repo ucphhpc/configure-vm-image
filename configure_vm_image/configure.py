@@ -356,6 +356,15 @@ async def configure_vm_image(
         )
         response["verbose_outputs"] = verbose_outputs
 
+    if configure_vm_template_path is not None:
+        if not exists(configure_vm_template_path):
+            response["msg"] = PATH_NOT_FOUND_ERROR_MSG.format(
+                configure_vm_template_path,
+                "could not find the VM template configuration file",
+            )
+            response["verbose_outputs"] = verbose_outputs
+            return PATH_NOT_FOUND_ERROR, response
+
     if configure_vm_template_values is None:
         configure_vm_template_values = {}
 
