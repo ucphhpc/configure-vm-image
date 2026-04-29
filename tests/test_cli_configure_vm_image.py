@@ -6,8 +6,7 @@ from configure_vm_image.cli.configure_image import main
 from configure_vm_image.common.codes import SUCCESS
 from configure_vm_image.common.defaults import CONFIGURE_VM_MACHINE, CPU_ARCHITECTURE
 from configure_vm_image.utils.io import copy, exists, join, remove
-
-from .context import AsyncConfigureTestContext
+from tests.context import AsyncConfigureTestContext
 
 
 def cli_action(*args):
