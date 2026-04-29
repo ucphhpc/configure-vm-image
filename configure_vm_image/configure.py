@@ -227,21 +227,25 @@ async def configure_image(vm_orchestrator, **kwargs):
     return configure_result, configure_msg
 
 
-def finished_configure(configure_vm_log_path):
+def finished_configure(configure_vm_log_path, line_finished_markers=None):
     """Waits for the configuration process to finish"""
+
     # Wait for the configuration process to finish
     if not exists(configure_vm_log_path):
         return False
 
-    first_marker = "Cloud-init v"
-    second_marker = "finished at"
+    if line_finished_markers is None:
+        line_finished_markers = []
 
     finished = False
     while not finished:
         content = load(configure_vm_log_path, readlines=True)
         if content and isinstance(content, (list, set, tuple)):
             for line in content:
-                if first_marker in line and second_marker in line:
+                found_markers = [
+                    marker for marker in line_finished_markers if marker in line
+                ]
+                if len(found_markers) == len(line_finished_markers):
                     finished = True
     return finished
 
@@ -442,19 +446,20 @@ async def configure_vm_image(
             )
         )
 
-    generated_result, generated_msg = generate_image_configuration(
-        cloud_init_iso_output_path,
-        user_data_path=user_data_path,
-        meta_data_path=meta_data_path,
-        vendor_data_path=vendor_data_path,
-        network_config_path=network_config_path,
-    )
-    if verbose and generated_msg:
-        verbose_outputs.append(generated_msg)
-    if not generated_result:
-        response["msg"] = generated_msg
-        response["verbose_outputs"] = verbose_outputs
-        return generated_result, response
+    if user_data_path or meta_data_path or vendor_data_path or network_config_path:
+        generated_result, generated_msg = generate_image_configuration(
+            cloud_init_iso_output_path,
+            user_data_path=user_data_path,
+            meta_data_path=meta_data_path,
+            vendor_data_path=vendor_data_path,
+            network_config_path=network_config_path,
+        )
+        if verbose and generated_msg:
+            verbose_outputs.append(generated_msg)
+        if not generated_result:
+            response["msg"] = generated_msg
+            response["verbose_outputs"] = verbose_outputs
+            return generated_result, response
 
     if not exists(os.path.dirname(configure_vm_log_path)):
         created = makedirs(os.path.dirname(configure_vm_log_path))
@@ -496,8 +501,11 @@ async def configure_vm_image(
         configure_vm_template_values["cpu_architecture"] = CPU_ARCHITECTURE
     if "machine" not in configure_vm_template_values:
         configure_vm_template_values["machine"] = CONFIGURE_VM_MACHINE
-    if "cd_iso_path" not in configure_vm_template_values:
-        configure_vm_template_values["cd_iso_path"] = cloud_init_iso_output_path
+
+    # Only add the cd_iso_path to the template values if the cloud-init iso image has been generated
+    if exists(cloud_init_iso_output_path):
+        if "cd_iso_path" not in configure_vm_template_values:
+            configure_vm_template_values["cd_iso_path"] = cloud_init_iso_output_path
     if "configure_vm_log_path" not in configure_vm_template_values:
         configure_vm_template_values["configure_vm_log_path"] = configure_vm_log_path
 
@@ -533,7 +541,17 @@ async def configure_vm_image(
         )
         return PATH_NOT_FOUND_ERROR, response
 
-    finished = finished_configure(configure_vm_log_path)
+    if exists(cloud_init_iso_output_path):
+        # Expect cloud-init to run
+        finished = finished_configure(
+            configure_vm_log_path, line_finished_markers=["Cloud-init v", "finished at"]
+        )
+    else:
+        # Just expect a normal boot
+        finished = finished_configure(
+            configure_vm_log_path,
+            line_finished_markers=["Activate the web console with:"],
+        )
     if not finished:
         response["msg"] = "Failed to finish configuring the image"
         response["verbose_outputs"] = verbose_outputs
