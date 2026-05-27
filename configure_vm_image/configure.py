@@ -328,6 +328,7 @@ async def configure_vm_image(
     configure_vm_template_path=join(RES_DIR, "configure-vm-template.xml.j2"),
     configure_vm_template_values=None,
     configure_vm_orchestrator=VM_ORCHESTRATOR_LIBVIRT_PROVIDER,
+    configure_vm_remove_options=None,
     reset_operations="defaults,-ssh-userdir",
     verbose=False,
 ):
@@ -577,7 +578,13 @@ async def configure_vm_image(
         response["verbose_outputs"] = verbose_outputs
         return CONFIGURE_IMAGE_ERROR, response
 
-    remove, remove_msg = vm_action("remove", configured_id)
+    remove_args = []
+    if configure_vm_remove_options is not None:
+        user_options = configure_vm_remove_options.split()
+        # https://github.com/rasmunk/libvirt_provider/blob/b90780f23aaa8f86ef1dc3142f996e7e6b30c0c3/libvirt_provider/cli/parsers/instance.py#L189
+        remove_args = ["--flags"] + user_options
+
+    remove, remove_msg = vm_action("remove", configured_id, *remove_args)
     if not remove:
         response["msg"] = (
             f"Failed to remove the VM: {configured_id} after configuration: {remove_msg}"

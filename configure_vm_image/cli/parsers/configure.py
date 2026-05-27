@@ -114,6 +114,13 @@ def configure_group(parser):
         help="The orchestrator to use when provisioning the virtual machine that is used to configure a particular virtual machine image",
     )
     configure_group_.add_argument(
+        "--configure-vm-remove-options",
+        "-cv-ro",
+        dest="{}_configure_vm_remove_options".format(CONFIGURE_ARGUMENT),
+        default=None,
+        help="""Additional arguments to provide vm removing the configuring virtual machine.""",
+    )
+    configure_group_.add_argument(
         "--reset-operations",
         "-ro",
         dest="{}_reset_operations".format(CONFIGURE_ARGUMENT),
