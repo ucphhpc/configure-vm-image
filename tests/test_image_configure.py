@@ -83,3 +83,20 @@ class AsyncTestImageConfiguration(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(return_code, SUCCESS)
         self.assertIsNotNone(msg)
+
+    async def test_basic_configure_with_remove_options(self):
+        return_code, msg = await configure_vm_image(
+            self.image_to_configure,
+            network_config_path=join(self.cloud_init_directory, "network-config"),
+            user_data_path=join(self.cloud_init_directory, "user-data"),
+            cloud_init_iso_output_path=join(
+                self.cloud_init_output_directory, f"{self.seed}-cidata.iso"
+            ),
+            configure_vm_name=self.configure_vm_name,
+            configure_vm_log_path=self.configure_vm_log_path,
+            configure_vm_template_path=self.context.image_template_config,
+            configure_vm_remove_options="nvram,managed_save",
+            verbose=True,
+        )
+        self.assertEqual(return_code, SUCCESS)
+        self.assertIsNotNone(msg)

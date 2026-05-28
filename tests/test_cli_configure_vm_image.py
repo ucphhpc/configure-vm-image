@@ -100,3 +100,24 @@ class TestCLIConfigurer(unittest.IsolatedAsyncioTestCase):
         ]
         return_code = cli_action(*args)
         self.assertEqual(return_code, SUCCESS)
+
+    def test_configurer_cli_with_remove_options(self):
+        args = [
+            self.image_to_configure,
+            "--config-user-data-path",
+            join(self.cloud_init_directory, "user-data"),
+            "--config-network-config-path",
+            join(self.cloud_init_directory, "network-config"),
+            "--cloud-init-iso-output-path",
+            join(self.cloud_init_output_directory, f"{self.seed}-cidata.iso"),
+            "--configure-vm-name",
+            self.configure_vm_name,
+            "--configure-vm-log-path",
+            self.configure_vm_log_path,
+            "--configure-vm-template-path",
+            self.context.image_template_config,
+            "--configure-vm-remove-options",
+            "nvram,managed_save",
+        ]
+        return_code = cli_action(*args)
+        self.assertEqual(return_code, SUCCESS)
