@@ -583,11 +583,13 @@ async def configure_vm_image(
         user_options = configure_vm_remove_options.split()
         # https://github.com/rasmunk/libvirt_provider/blob/b90780f23aaa8f86ef1dc3142f996e7e6b30c0c3/libvirt_provider/cli/parsers/instance.py#L189
         remove_args = ["--flags"] + user_options
+    if verbose:
+        verbose_outputs.append(f"Using the configure vm removal options: {remove_args}")
 
     remove, remove_msg = vm_action("remove", configured_id, *remove_args)
     if not remove:
         response["msg"] = (
-            f"Failed to remove the VM: {configured_id} after configuration: {remove_msg}"
+            f"Failed to remove the VM: {configured_id} after configuration: {remove_msg} with options: {remove_args}"
         )
         response["verbose_outputs"] = verbose_outputs
         return CONFIGURE_IMAGE_ERROR, response
