@@ -5,8 +5,9 @@ import unittest
 from configure_vm_image.common.codes import SUCCESS
 from configure_vm_image.common.defaults import CONFIGURE_VM_MACHINE, CPU_ARCHITECTURE
 from configure_vm_image.configure import configure_vm_image
-from configure_vm_image.utils.io import copy, exists, join, remove
+from configure_vm_image.utils.io import chown, copy, exists, join, remove
 from tests.context import AsyncConfigureTestContext
+from tests.utils import get_current_user_gid, get_current_user_uid
 
 
 class AsyncTestImageConfiguration(unittest.IsolatedAsyncioTestCase):
@@ -34,6 +35,16 @@ class AsyncTestImageConfiguration(unittest.IsolatedAsyncioTestCase):
 
         self.configure_vm_log_path = os.path.realpath(
             f"{join(self.context.test_tmp_directory, self.configure_vm_name)}.log"
+        )
+
+        # Ensure that the current user owns the test directories
+        self.user_uid = get_current_user_uid()
+        self.user_gid = get_current_user_gid()
+        self.assertTrue(
+            chown(self.context.test_res_directory, self.user_uid, self.user_gid)
+        )
+        self.assertTrue(
+            chown(self.context.test_tmp_directory, self.user_uid, self.user_gid)
         )
 
     async def asyncTearDown(self):
