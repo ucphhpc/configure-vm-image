@@ -27,7 +27,7 @@ format: install-dev
 	black --line-length=88 --target-version=py312 .
 
 .PHONY: formatcheck
-formatcheck: 
+formatcheck:
 	flake8
 
 .PHONY: configure
